@@ -13,13 +13,44 @@
  * Each extension should be a singleton
  * These data sources are passed to the mapper's constructor, or used directly for more 'custom' foo (eg, specific queries, or db level stuff)
  */
+
+$Data_instance;
 class Data
 {
-	private $db;
+	private static $data_instance;
 	
-	public function __construct($data=false)
+	private $db;
+	private $connected = false;
+	
+	/**
+	 * make this a singleton
+	 * 
+	 * @param unknown_type $data
+	 * @return unknown_type
+	 */
+	//public function __construct($data=false)
+	private function __construct($data=false)
 	{
+		global $Data_instance;
+		if($Data_instance)
+		{
+			return $Data_instance;
+		}
+		else
+		{
+			$Data_instance &= $this;
+		}
 		$this->db = $data;
+	}
+	
+	public function instance()
+	{
+		if (!isset(self::$data_instance)) {
+            $c = __CLASS__;
+            self::$data_instance = new $c;
+        }
+
+        return self::$data_instance;
 	}
 	
 	/**
@@ -29,12 +60,14 @@ class Data
 	 */
 	private function connect()
 	{
-		isset($this->username);
-		isset($this->password);
+		isset($this->data->connection->username);
+		isset($this->data->connection->password);
 		if (!$this->db instanceof PDO)
 		{
-			$this->db = new PDO($this->dsn, $this->username, $this->password);
+			$this->db = new PDO($this->data->connection->dsn, $this->data->connection->username, $this->data->connection->password);
 			$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			
+			$this->connected = true;
 		}
 	}
 	
@@ -61,9 +94,16 @@ class Data
 	 *	"`id` < 7 and `active` = 1"
 	 *
 	 *	fieldnames must be string or array
+	 *
+	 *	TODO change db->quote for proper, secure, faster db->prepare
 	 */
 	public function select($table, $fieldnames="*", $conditions=false, $order=false, $desc=false, $count=false, $start='0')
 	{
+		// lazily connect
+		if(!$this->connected)
+		{
+			$this->connect();
+		}
 		if(is_array($fieldnames))
 		{
 			$fieldnames = implode(", ", $fieldnames);
@@ -77,11 +117,11 @@ class Data
 			{
 				if(3 === count($condition))
 				{
-					array_push($query_conditions, '`' . $condition[0] . '` ' . $condition[2] . ' ' . mysql_real_escape_string($condition[1]));
+					array_push($query_conditions, '`' . $condition[0] . '` ' . $condition[2] . ' ' . $this->db->quote($condition[1]));
 				}
 				elseif(2 === count($condition))
 				{
-					array_push($query_conditions, '`' . $condition[0] . '` = ' . mysql_real_escape_string($condition[1]));
+					array_push($query_conditions, '`' . $condition[0] . '` = ' . $this->db->quote($condition[1]));
 				}
 			}
 			$conditions = implode(' AND ', $query_conditions);
@@ -89,7 +129,7 @@ class Data
 		
 		if($order)
 		{
-			$order = ' ORDER BY ' . mysql_real_escape_string($order);
+			$order = ' ORDER BY ' . $this->db->quote($order);
 			if($desc)
 			{
 				$order .= ' DESC';
@@ -102,7 +142,7 @@ class Data
 	
 		if($count)
 		{
-			$limit = ' LIMIT ' . mysql_real_escape_string($start) . ', ' . mysql_real_escape_string($count);
+			$limit = ' LIMIT ' . $this->db->quote($start) . ', ' . $this->db->quote($count);
 		}
 		else
 		{
@@ -127,11 +167,13 @@ class Data
 	 */
 	public function find($table, $id, $id_fieldname='id')
 	{
+		// lazy connect happens in select
 		return $this->select($table, '*', array($id_fieldname, $id));
 	}
 	
 	public function findAll($table, $count=0, $page=0)
 	{
+		// lazy connect happens in select
 		$start = ($page * $count);
 		return $this->select($table, '*', false, false, false, $start, $count);
 	}
@@ -144,6 +186,12 @@ class Data
 	 */
 	private function query($sql)
 	{
+		// lazily connect
+		if(!$this->connected)
+		{
+			$this->connect();
+		}
+		
 		// put code here to try and sniff to try and get the type of query
 		// select based, insert based, etc
 		// or even something like create database!
@@ -153,16 +201,31 @@ class Data
 	
 	public function update()
 	{
+		// lazily connect
+		if(!$this->connected)
+		{
+			$this->connect();
+		}
 		
 	}
 	
 	public function insert()
 	{
+		// lazily connect
+		if(!$this->connected)
+		{
+			$this->connect();
+		}
 		
 	}
 	
 	public function delete()
 	{
+		// lazily connect
+		if(!$this->connected)
+		{
+			$this->connect();
+		}
 		
 	}
 }
