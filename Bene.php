@@ -146,6 +146,7 @@ abstract class Bene
 		$this->controllersPath	= $this->projectRoot . $this->ds . 'controllers';
 		$this->modelsPath		= $this->projectRoot . $this->ds . 'models';
 		$this->mappersPath		= $this->projectRoot . $this->ds . 'mappers';
+		$this->formsPath		= $this->projectRoot . $this->ds . 'forms';
 		$this->componentsPath	= $this->projectRoot . $this->ds . 'components';
 		$this->templatePlugins	= $this->componentsPath . $this->ds . 'templatePlugins';
 		$this->projectCorePath	= $this->projectRoot . $this->ds . 'core';
@@ -206,6 +207,31 @@ abstract class Bene
 		    }
 		    unset($process);
 		}
+	}
+	
+	/*
+	 * Loading methods - used to dynamically load specific component types
+	 * 
+	 * This greatly lowers the setup overhead on each Bene request at the cost
+	 * of having to call on of these before a resource is available
+	 * 
+	 * This may now no longer be needed
+	 */
+	
+	/**
+	 * Requires the file containing this form class (assuming naming conventions are adhered to)
+	 * @return unknown_type
+	 */
+	public function loadForm($form, $validator=false)
+	{
+		if(false === $validator)
+		{
+			// TODO point this at the project-wide validator over-ride
+			// so the default validator can be easily extensible
+			$validator = new Validator();
+		}
+		require_once($this->formsPath . $this->ds . $form . ".php");
+		return new $form($validator);
 	}
 }
 

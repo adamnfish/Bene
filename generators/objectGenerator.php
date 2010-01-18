@@ -78,25 +78,33 @@ class ObjectGenerator extends Generator
 	private function setterConditions($fieldname, $field)
 	{
 		$conditions = array();
+		// change these so they use Validator methods
+		// this brings setting in line with the front-end behaviour
 		if($field['length'])
 		{
-			$conditions[] = " {$field['length']} <= strlen($$fieldname)";
+//			$conditions[] = " {$field['length']} <= strlen($$fieldname)";
+			$conditions[] = " Validator::maxlength($$fieldname, {$field['length']})";
 		}
 		if(in_array($field['type'], $this->int_types))
 		{
-			$conditions[] = " is_int($$fieldname)";
+//			$conditions[] = " is_int($$fieldname)";
+			$conditions[] = " Validator::digits($$fieldname)";
 		}
 		if(in_array($field['type'], $this->float_types))
 		{
-			$conditions[] = " is_float($$fieldname)";
+//			$conditions[] = " is_float($$fieldname)";
+			$conditions[] = " Validator::number($$fieldname)";
 		}
 		if(isset($field['unsigned']) && true == $field['unsigned'])
 		{
-			$conditions[] = " 0 <= $$fieldname";
+//			$conditions[] = " 0 <= $$fieldname";
+			$conditions[] = " Validator::unsigned($$fieldname)";
 		}
 		if(isset($field['pattern']))
 		{
-			$conditions[] = " preg_match('" . str_replace("'", "\'", $field['pattern']) . "', $$fieldname)";
+			$pattern = str_replace('"', '\"', $field['pattern']);
+//			$conditions[] = " preg_match('" . str_replace("'", "\'", $field['pattern']) . "', $$fieldname)";
+			$conditions[] = " Validator::pattern(\"{$field['pattern']}\", $$fieldname)";
 		}
 		
 		if(count($conditions))
@@ -126,6 +134,19 @@ class ObjectGenerator extends Generator
 			$cast = '(string)';
 		}
 		return $cast;
+	}
+	
+	private function construct()
+	{
+		$construct = <<<CONSTRUCT
+
+	public function __construct()
+	{
+		parent::__construct();
+	}
+
+CONSTRUCT;
+		return $construct;
 	}
 	
 	private function getter($fieldname, $field)
