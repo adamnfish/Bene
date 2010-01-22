@@ -29,8 +29,9 @@ class Data
 	 * @return unknown_type
 	 */
 	//public function __construct($data=false)
-	private function __construct($data=false)
+	private function __construct()
 	{
+		global $db;
 		global $Data_instance;
 		if($Data_instance)
 		{
@@ -40,7 +41,7 @@ class Data
 		{
 			$Data_instance &= $this;
 		}
-		$this->db = $data;
+		$this->db = $db;
 	}
 	
 	public function instance()
@@ -55,6 +56,7 @@ class Data
 	
 	/**
 	 * Implements the actual database connection (creates PDO)
+	 * Not needed in FCC because a database connection exists anyway
 	 * This will be done lazily
 	 * @return unknown_type
 	 */
@@ -69,6 +71,38 @@ class Data
 			
 			$this->connected = true;
 		}
+	}
+	
+	private function conditions($conditions)
+	{
+		if(is_array($conditions) && is_array($conditions[0]))
+		{
+			// build conditions string from array - otherwise we'll assume it's a string for performance's sake
+			$query_conditions = array();
+			foreach($conditions as $condition)
+			{
+				array_push($query_conditions, $this->arrayToCondition($condition));
+			}
+			$conditions = implode(' AND ', $query_conditions);
+		}
+		elseif(is_array($conditions))
+		{
+			$conditions = $this->arrayToCondition($conditions);
+		}
+		return $conditions;
+	}
+	
+	private function arrayToCondition($conditionArray)
+	{
+		if(3 === count($conditionArray))
+		{
+			$condition = '`' . $conditionArray[0] . '` ' . $conditionArray[1] . " '" . mysql_real_escape_string($conditionArray[2], $this->db) . "'";
+		}
+		elseif(2 === count($conditionArray))
+		{
+			$condition = '`' . $conditionArray[0] . "` = '" . mysql_real_escape_string($conditionArray[1], $this->db) . "'";
+		}
+		return $condition;
 	}
 	
 	/*
@@ -97,39 +131,23 @@ class Data
 	 *
 	 *	TODO change db->quote for proper, secure, faster db->prepare
 	 */
-	public function select($table, $fieldnames="*", $conditions=false, $order=false, $desc=false, $count=false, $start='0')
+	public function select($tablename, $fieldnames="*", $conditions=false, $order=false, $desc=false, $count=false, $start='0')
 	{
 		// lazily connect
-		if(!$this->connected)
-		{
-			$this->connect();
-		}
+//		if(!$this->connected)
+//		{
+//			$this->connect();
+//		}
 		if(is_array($fieldnames))
 		{
 			$fieldnames = implode(", ", $fieldnames);
 		}
 		
-		if(is_array($conditions))
-		{
-			// build conditions string from array - otherwise we'll assume it's a string for performance's sake
-			$query_conditions = array();
-			foreach($conditions as $condition)
-			{
-				if(3 === count($condition))
-				{
-					array_push($query_conditions, '`' . $condition[0] . '` ' . $condition[2] . ' ' . $this->db->quote($condition[1]));
-				}
-				elseif(2 === count($condition))
-				{
-					array_push($query_conditions, '`' . $condition[0] . '` = ' . $this->db->quote($condition[1]));
-				}
-			}
-			$conditions = implode(' AND ', $query_conditions);
-		}
+		$conditions = $this->conditions($conditions);
 		
 		if($order)
 		{
-			$order = ' ORDER BY ' . $this->db->quote($order);
+			$order = ' ORDER BY ' . mysql_real_escape_string($order, $this->db);
 			if($desc)
 			{
 				$order .= ' DESC';
@@ -142,16 +160,16 @@ class Data
 	
 		if($count)
 		{
-			$limit = ' LIMIT ' . $this->db->quote($start) . ', ' . $this->db->quote($count);
+			$limit = ' LIMIT ' . mysql_real_escape_string($start, $this->db) . ', ' . mysql_real_escape_string($count, $this->db);
 		}
 		else
 		{
 			$limit = '';
 		}
-		$sql = "SELECT $fieldnames FROM `$table` WHERE $conditions$order$limit";
-		$stmt = $this->db->prepare($sql);
-		$stmt->execute();
-		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+		$sql = "SELECT $fieldnames FROM `$tablename` WHERE $conditions$order$limit";
+
+		echo $sql;
+//		mysql_query($sql, $this->db);
 	}
 	
 	/**
@@ -165,21 +183,47 @@ class Data
 	 * @param $id_fieldname
 	 * @return unknown_type
 	 */
-	public function find($table, $id, $id_fieldname='id')
+	public function find($tablename, $id, $id_fieldname='id')
 	{
 		// lazy connect happens in select
-		return $this->select($table, '*', array($id_fieldname, $id));
+//		return $this->select($table, '*', array($id_fieldname, $id));
+		
+		$sql = "SELECT * FROM `$tablename` WHERE `$id_fieldname` = '" . mysql_real_escape_string($id, $this->db) . "';";
+//		mysql_query($sql, $this->db);
+		echo $sql;
+		
 	}
 	
-	public function findAll($table, $count=0, $page=0)
+	public function findAll($tablename, $count=0, $page=0)
 	{
 		// lazy connect happens in select
 		$start = ($page * $count);
-		return $this->select($table, '*', false, false, false, $start, $count);
+		
+		$sql = array();
+		$sql[] = "SELECT * FROM `$tablename`";
+		if($count)
+		{
+			if($page)
+			{
+				$sql[] = " LIMIT $start , $count;";
+			}
+			else
+			{
+				$sql[] = " LIMIT $count;";
+			}
+		}
+		else
+		{
+			$sql[] = ";";
+		}
+		
+		echo implode($sql, "");
 	}
 	
 	/**
 	 * This one is just for databases
+	 * Will be handy for when the developer wants to write custom queries for advanced
+	 * features or performance optimisations
 	 * 
 	 * @param $sql
 	 * @return unknown_type
@@ -187,46 +231,77 @@ class Data
 	private function query($sql)
 	{
 		// lazily connect
-		if(!$this->connected)
-		{
-			$this->connect();
-		}
+//		if(!$this->connected)
+//		{
+//			$this->connect();
+//		}
 		
 		// put code here to try and sniff to try and get the type of query
 		// select based, insert based, etc
 		// or even something like create database!
 		// determine what to return accordingly
+		// because otherwise, this isn't dramatically useful
 		$this->db->query($sql);
 	}
 	
-	public function update()
+	public function update($tablename, $data, $conditions, $limit=0)
 	{
 		// lazily connect
-		if(!$this->connected)
+//		if(!$this->connected)
+//		{
+//			$this->connect();
+//		}
+		$sql = "UPDATE `$tablename` SET";
+		$i = 0;
+		foreach($data as $field => $value)
 		{
-			$this->connect();
+			if($i)
+			{
+				$sql .= ",";
+			}
+			$i++;
+			$sql .= " `$field` = '" . mysql_real_escape_string($value, $this->db) . "'";
 		}
+		$conditions = $this->conditions($conditions);
+		$limit = $limit ? " LIMIT $limit;" : ";";
+		$sql .= " WHERE $conditions$limit";
+		echo $sql;
 		
+//		mysql_query($sql, $this->db);
 	}
 	
-	public function insert()
+	public function insert($tablename, $data)
 	{
 		// lazily connect
-		if(!$this->connected)
+//		if(!$this->connected)
+//		{
+//			$this->connect();
+//		}
+		$fieldnames = array_keys($data);
+		$values = array_values($data);
+		for($i = 0; $i < count($values); $i++)
 		{
-			$this->connect();
+			$values[$i] = mysql_real_escape_string($values[$i], $this->db);
 		}
+		$sql = "INSERT INTO `$tablename` ('" . implode("', '", $fieldnames) . "') VALUES ('" . implode("', '", $values) . "');";
 		
+//		mysql_query($sql, $this->db);
+		echo $sql;
 	}
 	
-	public function delete()
+	public function delete($tablename, $conditions, $limit=0)
 	{
 		// lazily connect
-		if(!$this->connected)
-		{
-			$this->connect();
-		}
+//		if(!$this->connected)
+//		{
+//			$this->connect();
+//		}
+		$conditions = $this->conditions($conditions);
+		$limit = $limit ? " LIMIT $limit;" : ";";
+		$sql = "DELETE FROM `$tablename` WHERE $conditions$limit";
 		
+		echo $sql;
+//		mysql_query($qry, $this->db);
 	}
 }
 

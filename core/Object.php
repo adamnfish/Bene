@@ -2,24 +2,37 @@
 
 abstract class Object
 {
-	protected $created;
-	protected $modified;
+	// this holds the actual model property values
+	// it's namespaced like this to prevent clashes with the Object method names
+	protected $data;
 	
+	// validation rules for the object
+	// protected $rules;
+
 	// it needs to know which data source to use, this would be genereated from JDOS
 	// an instance of Data
-	protected $_data;
-	// an instance of Validator (or an extension thereof)
-	protected $_validator;
+	protected $dataSource;
 	
 	// holds validation errors
-	protected $_errors = array();
+	protected $errors = array();
 	
-	// this allows the tablename to be different to the classname
-	// comes from JDOS
-	protected $_tablename;
 	// we want to know the property names and their corresponding fieldname
 	// comes from JDOS
-	protected $_fieldnames;
+	// properties is equal to array_keys($fieldnames) but exists as a performance benefit
+	protected $properties;
+	protected $fieldnames;
+	protected $rules;
+		
+	// this allows the tablename to be different to the classname
+	// comes from JDOS
+	protected $tablename;
+	// the key filed for this object (used for 'find')
+	protected $key;
+	
+	// holds instance of error class
+	protected $E;
+
+
 	/*
 	 * eg:
 	protected $fieldnames = array(
@@ -34,11 +47,16 @@ abstract class Object
 	// or it just be easier to hold a reference to this object's JDOS representation?
 	// yes, but that kind of forces Bene to use JDOS a little too much?
 	// better to have it as just the list of rules, so it can be applied identically to forms
-	protected $_validation;
+	// protected $validation;
+	// not needed anymore - Validator is a static class :)
 	
+	/**
+	 * constructor for the class - delete this if it isn't being used to improve performance
+	 */
 	protected function __construct()
 	{
-		
+		$this->E = Errors::instance();
+		$this->dataSource = Data::instance("test");
 	}
 	
 	// for generator
@@ -46,70 +64,185 @@ abstract class Object
 	//		this should run it through a validator as it sets it, too?
 	// }
 	
+	/*
+	 * Export methods
+	 */
+	
 	/**
-	 *	returns a standard object representing this Object instance
-	 *	this is to circumvent protected properties
-	 *	basically, returns a bare copy of the object as it currently stands 
+	 * Returns a standard object representing this object's data
+	 * @return StdObject a bare object exposing the current data
 	 */
 	public function toObject()
 	{
-		$object;
-		foreach($this->GetClassVars() as $var)
+		return $this->data;
+	}
+	
+	/**
+	 * Returns an associative array representing the object's data
+	 * @return Array representing object data
+	 */
+	public function toArray()
+	{
+		$array = array();
+		foreach($this->properties as $property)
 		{
-			$object->{$var} = $this->{"get" .  strtoupper(substr($var, 0, 1)) . substr($var, 1)}();
+			$array[$property] = $this->data->{$property};
+		}
+		return $array;
+	}
+	
+	/**
+	 * Returns an xml representation of the object's data
+	 * @return unknown_type
+	 */
+	public function toXml($header=true)
+	{
+		$class = get_class($this);
+		$xml = array();
+		if($header)
+		{
+			$xml[] = '<?xml version="1.0" encoding="UTF-8"?>';
+		}
+		$xml[] = "<$class>";
+		foreach($this->data as $property => $value)
+		{
+			$xml[] = "<$property>$value</$property>";
+		}
+		$xml[] = "</$class>";
+		return implode($xml);
+	}
+	
+	/**
+	 * Returns a JSON string representing the object's data
+	 * @return String a JSON string representing the data
+	 */
+	public function toJson($callback='')
+	{
+		if('' === $callback)
+		{
+			return json_encode($this->data);
+		}
+		else
+		{
+			return $callback . "(" . json_encode($this->data) . ");";
 		}
 	}
 	
 	/**
-	 * Returns an array of the model properties
-	 * @return unknown_type
+	 * Returns an array of the model property names
+	 * @return Array fieldnames
 	 */
-	protected function getClassVars()
+	public function properties()
 	{
-		return get_class_vars($this);
+		return $this->properties;
 	}
 	
 	/**
-	 * populates the clas properties from an array of data
+	 * Return an array of all the 'fieldnames' for this object
+	 * Fieldnames may be the same as their corresponding property name, but it is possible
+	 * to have a fieldname that differs because of this property
+	 * if fieldnames is an empty array, assume they are all the same and return the property name
+	 * @return unknown_type
+	 */
+	public function fieldnames()
+	{
+		if(count($this->fieldnames))
+		{
+			return array_values($this->fieldnames);
+		}
+		else
+		{
+			return $this->properties;
+		}
+	}
+	
+	/**
+	 * Returns the fieldname for a specified property
+	 * It's likely to be the same, but just in case
+	 * if fieldnames is empty, assume they are all the same and just return the property back
+	 * @param String $property the name of the property
+	 * @return String the corresponding fieldname
+	 */
+	public function fieldname($property)
+	{
+		if(count($this->fieldnames))
+		{
+			return $this->properties[$this->fieldnames];
+		}
+		else
+		{
+			return $property;
+		}
+	}
+	
+	/**
+	 * Returns the object's validation rules
+	 * This method will be called by eg. Form when it wants to add these fields
+	 * @return unknown_type
+	 */
+	public function rules($property='')
+	{
+		if('' === $property)
+		{
+			return $this->rules;
+		}
+		else
+		{
+			return $this->rules[$property];
+		}
+	}
+	
+	/**
+	 * populates the clas properties from supplied data
 	 * 
-	 * @param Array $data
+	 * @param Mixed $data
 	 * @return Bool
 	 */
 	public function populate($data)
 	{
 		foreach($data as $prop => $value)
 		{
-			$this->{"set" . Utilities::camelcase($prop, true)}($value);
+			if(in_array($prop, $this->properties))
+			{
+				$this->{"set" . Utilities::camelcase($prop, true)}($value);
+			}
 		}
 		return true;
 	}
 	
 	/**
 	 * Saves the model to it's data source
-	 * This will delegate to Update / Insert as appropriate
+	 * This will delegate to update / insert as appropriate
 	 * @return unknown_type
 	 */
 	public function save()
 	{
-		$mapper = $this->getMapper();
+		if(isset($this->data[$this->key]))
+		{
+			return $this->update();
+		}
+		else
+		{
+			return $this->insert();
+		}
 	}
 	
 	/**
-	 * Performs an update action on the data source with this record
+	 * Updates this record on the data source
 	 * @return unknown_type
 	 */
 	public function update()
 	{
-		
+		$this->dataSource->update($this->tablename, $this->toArray(), array(array($this->key, $this->data->{$this->key})), 1);
 	}
 	
 	/**
-	 * Performs an insert on the data source with this record
+	 * Inserts this record into the data source
 	 * @return unknown_type
 	 */
 	public function insert()
 	{
-		
+		$this->dataSource->insert($this->tablename, $this->toArray());
 	}
 	
 	/**
@@ -118,7 +251,7 @@ abstract class Object
 	 */
 	public function delete()
 	{
-		
+		$this->dataSource->delete($this->tablename, array(array($this->key, $this->data->{$this->key})), 1);
 	}
 	
 	/**
@@ -127,7 +260,7 @@ abstract class Object
 	 */
 	public function find($id)
 	{
-		
+		$this->dataSource->find($this->tablename, $id, $this->key);
 	}
 	
 	/**
@@ -135,18 +268,18 @@ abstract class Object
 	 * (obviously, has pagination and stuff)
 	 * @return unknown_type
 	 */
-	public function findAll()
+	public function findAll($count=0, $page=0)
 	{
-		
+		$this->dataSource->findAll($this->tablename, $count, $page);
 	}
 	
 	/**
 	 * General select
 	 * @return unknown_type
 	 */
-	public function select()
+	public function select($conditions=false, $order=false, $desc=false, $count=false, $start='0')
 	{
-		
+		$this->dataSource->select($this->tablename, "*", $conditions, $order, $desc, $count, $start);
 	}
 	
 	// is query really necessary? wouldn't you do that from Data directly?
@@ -157,12 +290,8 @@ abstract class Object
 	}
 	
 	/*
-	// hopefully, mappers are redundant now?
-	private function getMapper()
-	{
-		
-	}
-	*/
+	 * Validation methods
+	 */
 	
 	public function isValid()
 	{
@@ -178,12 +307,12 @@ abstract class Object
 	
 	public function validationErrors()
 	{
-		return $this->_errors;
+		return $this->errors;
 	}
 	
 	public function validationError($property)
 	{
-		return $this->_errors[$property];
+		return $this->errors[$property];
 	}
 }
 ?>

@@ -13,16 +13,27 @@ class Errors
 	protected $display_level;
 	protected $log_level;
 	
+	private static $instance;
+	
 	/**
 	 * Sets default levels (suitable for production - should be changed for dev server!)
 	 * @param $display_level
 	 * @param $log_level
 	 * @return unknown_type
 	 */
-	public function __construct($display_level=0, $log_level=2)
+	private function __construct($display_level, $log_level)
 	{
 		$this->display_level = $display_level;
 		$this->log_level = $log_level;
+	}
+	
+	public function instance($display_level=0, $log_level=2)
+	{
+		if (!isset(self::$instance)) {
+			self::$instance = new Errors($display_level, $log_level);
+		}
+
+        return self::$instance;
 	}
 	
 	public function setDisplayLevel($display_level)
@@ -61,7 +72,9 @@ class Errors
 		foreach($this->errors as $error)
 		{
 			if($error->getType() <= $this->display_level)
-			$output[] = $error->paint();
+			{
+				$output[] = $error->paint();
+			}
 		}
 		return implode("", $output);
 	}

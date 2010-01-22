@@ -45,10 +45,10 @@ class Error
 		}
 		if($this->details)
 		{
-			$log .= $html ? "<br />" : "\n";
+			$log .= $html ? "<br />\n" : "\n";
 			$log .= $this->details;	
 		}
-		$log .= $html ? "</p>" : "\n";
+		$log .= $html ? "</p>\n" : "\n";
 		return $log;
 	}
 	

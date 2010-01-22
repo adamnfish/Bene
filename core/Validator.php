@@ -4,6 +4,15 @@
  * Contains validation rules for the framework - means they don't need to be inside each object instance :)
  */
 
+/**
+ * Static class that contains validation methods and default error strings for FCC User preferences
+ * Largely based on the jQuery validate plugin validation
+ * 
+ * Extend this class to add rules or to use custom error messages
+ * @author adamf
+ *
+ */
+
 class Validator
 {
 	// default error strings
@@ -29,9 +38,32 @@ class Validator
 		"pattern" => "Please enter a valid input" // this one shouldn't be used much for front-end - better to create a custom rule
 	);
 	
-	public function __construct()
+	private $rules_with_args = array(
+		"minlength",
+		"maxlength",
+		"rangelenth",
+		"min",
+		"max",
+		"range",
+		"accept",
+		"pattern"
+	);
+	
+	private function __construct()
 	{
 		
+	}
+	
+	/**
+	 * A layer of abstraction in retrieving error messages
+	 * This can be used to add internationalisation to the project, for example
+	 * by overiding this method
+	 * @param String $type
+	 * @return unknown_type
+	 */
+	public function getErrorMessage($type)
+	{
+		return $this->error_messages[$type];
 	}
 	
 	/**
@@ -48,7 +80,23 @@ class Validator
 	 */
 	public function check($value, $rules)
 	{
-		
+		$valid = true;
+		foreach($rules as $rule => $param)
+		{
+			if(method_exists(self, $rule))
+			{
+				// TODO maybe set all the validation methods to accept value, param, required
+				// make the default param true for methods that don't need it and ignore it unless it's false
+				if(in_array($rule, self::rules_with_args))
+				{
+					$valid = self::$rule($value, $param) && $valid;
+				}
+				else
+				{
+					$valid = self::$rule($value) && $valid;
+				}
+			}
+		}
 	}
 	
 	// a method for each rule?
@@ -313,7 +361,7 @@ class Validator
 	{
 		if(false === $required || true === Validator::required($value))
 		{
-			return $this->number($value) && 0 <= $value;
+			return self::number($value) && 0 <= $value;
 		}
 		return false;
 	}

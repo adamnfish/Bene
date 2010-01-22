@@ -7,27 +7,43 @@
  * 
  * @author adamf
  *
+ * TODO work out how to manage fieldname clashes
+ * 
  */
-abstract class Form
+class Form
 {
-	protected $_errors;
+	// holds the values for the form
+	private $data;
 	
+	private $rules;
 	// eg
 	/*
 	protected $_rules = array(
 		""
 	);
 	 */
-	protected $_rules;
-	
+
 	// fieldnames for this form
 	// this is duplicate data really, surely rules could hold this?
-	protected $_fields;
+	// keep this for performace / simplicity's sake
+	private $fields;
+
+	// holds the forms errors
+	private $errors;
+	private $valid = false;
+	private $validated = false;
 	
-	// an instance of a validator to run the actual checks through
-	protected $_validator;
-	protected $_valid = false;
+	// reference to the objects that have been added to the form
+	// this might be needed so it can do $fieldname, $fieldname_1, $fieldname_2 etc for duplicates
+	// if they are passed by reference then this Form class can directly populate the objects
+	// might be a nice peice of sugar? 
+	private $objects = array();
 	
+	/**
+	 * class constructor
+	 * you can pass in the objects/fields you want to include which sets the form up straight away
+	 * @param Mixed Object to populate the form and/or fields to add manually
+	 */
 	public function __construct()
 	{
 		$args = func_get_args();
@@ -43,6 +59,10 @@ abstract class Form
 				{
 					$this->addField($arg);
 				}
+				elseif(is_array($arg))
+				{
+					$this->addFields($arg);
+				}
 			}
 		}
 	}
@@ -53,9 +73,10 @@ abstract class Form
 	 * The object will already know about the JDOS validation rules, so this let's the form use them
 	 * 
 	 * @param Object $object
+	 * @param Bool populate whether or not to populate the form with the object's values as well (defaults to true)
 	 * @return Bool success
 	 */
-	public function addObject($obj)
+	public function addObject($obj, $populate=true)
 	{
 		if($obj instanceof Object)
 		{
@@ -63,6 +84,20 @@ abstract class Form
 			// get rules and name for each property and add to this form's fieldnames and rules
 			// rename clashing fieldnames using object's name and a number if they still clash
 			// will need some kind of mapping references for the renaming
+			$new_fields = $obj->toArray();
+			foreach($new_fields as $field => $value)
+			{
+				// if it doesn't already exist, add it and populate
+				if(false === array_key_exists($field, $this->fields))
+				{
+					$this->fields[] = $field;
+					$this->addField($field, $value, $obj->rules($field));
+					// this might be better written as
+					// $this->addField($field, $obj->get$field, $rules);
+					// where we get the rules from the object initially, and then fetch the data after
+					// makes more sense, given the goal of this Class 
+				}
+			}
 			return true;
 		}
 		return false;
@@ -73,28 +108,87 @@ abstract class Form
 	 * If rules are empty, then there are no rules on the field, obviously
 	 * 
 	 * @param String $name
+	 * #param String $value
 	 * @param Array $rules
-	 * @return bool success
+	 * @return Bool success
 	 */
-	public function addField($name, $rules=array())
+	public function addField($name, $value=null, $rules=array())
 	{
-		
+		$this->fields[] = $name;
+		$this->data[$name] = $value;
+		$this->rules[$name] = $rules;
+		$this->validated = false;
 	}
 	
 	/**
-	 * Adds multiple fields from a jQuery Validator-like array 
+	 * Removes a field from the form
+	 * @param unknown_type $name
+	 * @return unknown_type
+	 */
+	public function removeField($name)
+	{
+		$this->fields = array_diff($this->fields, array($name));
+		unset($this->rules[$name]);
+		unset($this->errors[$name]);
+		$this->validated = false;
+	}
+	
+	/**
+	 * Removes an array of supplied fieldnames from the form
+	 * This is used by removeObject, but is public in case it's useful
+	 * @param unknown_type $fields
+	 * @return unknown_type
+	 */
+	public function removeFields($fields)
+	{
+		$this->fields = array_diff($this->fields, $fields);
+		foreach($fields as $field)
+		{
+			unset($this->rules[$field]);
+			unset($this->errors[$field]);
+		}
+		$this->validated = false;
+	}
+	
+	/**
+	 * Removes an object's fields from the form
+	 * @param unknown_type $obj
+	 * @return unknown_type
+	 */
+	public function removeObject($obj)
+	{
+		if($obj instanceof Object)
+		{
+			$this->removeFields($obj->fieldnames());
+		}
+		return false;
+	}
+	
+	/**
+	 * Adds multiple fields from a jQuery Validator-like array
+	 * of the form,
+	 * array(
+	 * 		fieldname => rulesarray,
+	 * 		fieldname => rulesarray
+	 * )
 	 * 
 	 * @param Array $validationArray
 	 * @return Bool
 	 */
 	public function addFields($validationArray)
 	{
-		
+		$success = true;
+		foreach($validationArray as $fieldname => $rules)
+		{
+			$success = $this->addField($fieldname, $rules) && $success;
+		}
+		return $success;
 	}
 	
 	/**
 	 * Adds rules for a field
 	 * Is this really necessary?
+	 * merges the field's current rules array with the passed one
 	 * 
 	 * @param String $field
 	 * @param Array $rule
@@ -102,11 +196,43 @@ abstract class Form
 	 */
 	public function addRules($field, $rules)
 	{
-		
+		return $this->setRules(array_merge($this->_rules[$field], $rules));
+		$this->validated = false;
+	}
+	
+	/**
+	 * Sets the passed field's rules to the rules object provided
+	 * @param String $field name fo the field
+	 * @param Array $rules the rules for this field
+	 * @return unknown_type
+	 */
+	public function setRules($field, $rules)
+	{
+		$this->rules[$field] = $rules;
+		$this->validated = false;
 	}
 	
 	/*
-	 * populate the form from submission
+	 * Get/Set ters
+	 */
+	
+	public function set($name, $value)
+	{
+		if(key_exists($name, $this->data))
+		{
+			$this->validated = false;
+			return $this->data[$name] = $value;
+		}
+		return false;
+	}
+	
+	public function get($name)
+	{
+		return $this->data[$name];
+	}
+	
+	/*
+	 * populate the form
 	 */
 	
 	/**
@@ -118,10 +244,20 @@ abstract class Form
 	{
 		foreach($data as $field => $value)
 		{
-			
+			if(key_exists($field, $this->fields))
+			{
+				$this->set($field, $value);
+			}
 		}
 	}
-	
+
+	/**
+	 * Gets the values from the passed object and adds them to the form
+	 * This should be redundant?
+	 * addObject should automatically fill the form at the same time
+	 * @param unknown_type $obj
+	 * @return unknown_type
+	 */
 	public function fillFromObject($obj)
 	{
 		if($obj instanceof Object)
@@ -157,7 +293,12 @@ abstract class Form
 	 */
 	public function isValid()
 	{
-		
+		// caches the result if nothing has changed
+		if(true === $this->validated)
+		{
+			return $this->validated;
+		}
+		$this->validated = true;
 	}
 	
 	/*
