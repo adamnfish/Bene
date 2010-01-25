@@ -13,9 +13,9 @@
 class Form
 {
 	// holds the values for the form
-	private $data;
+	private $data = array();
 	
-	private $rules;
+	private $rules = array();
 	// eg
 	/*
 	protected $_rules = array(
@@ -26,10 +26,10 @@ class Form
 	// fieldnames for this form
 	// this is duplicate data really, surely rules could hold this?
 	// keep this for performace / simplicity's sake
-	private $fields;
+	private $fields = array();
 
 	// holds the forms errors
-	private $errors;
+	private $errors = array();
 	private $valid = false;
 	private $validated = false;
 	
@@ -73,10 +73,11 @@ class Form
 	 * The object will already know about the JDOS validation rules, so this let's the form use them
 	 * 
 	 * @param Object $object
-	 * @param Bool populate whether or not to populate the form with the object's values as well (defaults to true)
+	 * @param Bool $populate whether or not to populate the form with the object's values as well (defaults to true)
+	 * @param String $namespace allows multiple identical objects to exist in the form TODO implement this
 	 * @return Bool success
 	 */
-	public function addObject($obj, $populate=true)
+	public function addObject($obj, $populate=true, $namespace='')
 	{
 		if($obj instanceof Object)
 		{
@@ -85,18 +86,26 @@ class Form
 			// rename clashing fieldnames using object's name and a number if they still clash
 			// will need some kind of mapping references for the renaming
 			$new_fields = $obj->toArray();
-			foreach($new_fields as $field => $value)
+			foreach($new_fields as $field => &$value)
 			{
 				// if it doesn't already exist, add it and populate
 				if(false === array_key_exists($field, $this->fields))
 				{
-					$this->fields[] = $field;
-					$this->addField($field, $value, $obj->rules($field));
+					// TODO add namespacing here
+					// TODO have a class property that contains the namespace for each object
+					// $this->fields[] = $field;
+					$this->addField($field, $obj->rules($field), $value);
 					// this might be better written as
 					// $this->addField($field, $obj->get$field, $rules);
 					// where we get the rules from the object initially, and then fetch the data after
 					// makes more sense, given the goal of this Class 
 				}
+				else
+				{
+					// auto namespacing?
+				}
+				// after namespacing is sorted this will need to be here
+//				$this->addField($field, $obj->rules($field), $value);
 			}
 			return true;
 		}
@@ -107,17 +116,27 @@ class Form
 	 * Adds a field to the form, with supplied validation rules
 	 * If rules are empty, then there are no rules on the field, obviously
 	 * 
+	 * If the field already exists, this will fail
+	 * 
 	 * @param String $name
 	 * #param String $value
 	 * @param Array $rules
 	 * @return Bool success
 	 */
-	public function addField($name, $value=null, $rules=array())
+	public function addField($name, $rules=array(), &$value=null)
 	{
-		$this->fields[] = $name;
-		$this->data[$name] = $value;
-		$this->rules[$name] = $rules;
-		$this->validated = false;
+		if(!in_array($name, $this->fields))
+		{
+			$this->fields[] = $name;
+			$this->data[$name] = $value;
+			$this->rules[$name] = $rules;
+			$this->validated = false;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	/**
@@ -258,6 +277,7 @@ class Form
 	 * @param unknown_type $obj
 	 * @return unknown_type
 	 */
+	/*
 	public function fillFromObject($obj)
 	{
 		if($obj instanceof Object)
@@ -266,6 +286,7 @@ class Form
 		}
 		return false;
 	}
+	*/
 	
 	/*
 	 * validate methods
@@ -279,7 +300,16 @@ class Form
 	 */
 	public function checkField($field)
 	{
-		
+		$rules = $this->rules[$field];
+		foreach($rules as $rule => $param)
+		{
+			if(false === Validator::$rule($this->data[$field], $param))
+			{
+				$this->errors[$field] = Validator::getErrorMessage($rule, $param);
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	/**
@@ -296,9 +326,20 @@ class Form
 		// caches the result if nothing has changed
 		if(true === $this->validated)
 		{
-			return $this->validated;
+			return $this->valid;
 		}
-		$this->validated = true;
+		else
+		{
+			$this->valid = true;
+			foreach($this->fields as $field)
+			{
+				$this->valid = $this->checkField($field) && $this->valid;
+//				var_dump("checkField", $field, $this->checkField($field), $this->valid);
+//				var_dump($field, $this->valid);
+			}
+			$this->validated = true;
+		}
+		return $this->valid;
 	}
 	
 	/*
@@ -309,28 +350,34 @@ class Form
 	 * gets an array of all errors
 	 * this might be used to print a list of errors above a form
 	 * or for code that needs to know the error messages
-	 * @return unknown_type
+	 * @return Array
 	 */
-	public function getErrors()
+	public function validationErrors()
 	{
-		
+		return $this->errors;
 	}
 	
 	/**
 	 * Returns the 'first' error for the field
 	 * Errors have an order!
 	 * 
-	 * @param unknown_type $field
-	 * @return unknown_type
+	 * @param String $field
+	 * @return String
 	 */
-	public function getError($field)
+	public function validationError($field)
 	{
-		
+		return $this->errors[$field];
 	}
 	
+	/**
+	 * Adds an error to this Form's internal error array
+	 * @param String $field
+	 * @param String $error
+	 * @return null
+	 */
 	public function addError($field, $error)
 	{
-		
+		$this->errors[$field] = $error;
 	}
 }
 

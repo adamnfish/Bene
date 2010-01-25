@@ -8,26 +8,31 @@
 
 class TestObject extends Object
 {
-	protected $properties = array("testPropertyOne", "testPropertyTwo");
-	protected $fieldnames = array("testPropertyOne" => "testPropertyOne", "testPropertyTwo" => "testPropertyTwo");
+	protected $properties = array("testPropertyOne", "testPropertyTwo", "testPropertyThree");
+	protected $fieldnames = array("testPropertyOne" => "testPropertyOne", "testPropertyTwo" => "testPropertyTwo", "testPropertyThree" => "testPropertyThree");
 	protected $rules = array(
 		"testPropertyOne" => array(
 			"number" => true,
 			"unsigned" => true
 		),
-		"testPropertTwo" => array(
+		"testPropertyTwo" => array(
 			"maxlength" => 10,
 			"required" => true
+		),
+		"testPropertyThree" => array(
+			"number" => true,
+			"range" => array(10, 20)
 		)
 	);
 	protected $key = "testPropertyOne";
 	protected $tablename = "TestObject";
 	
-	public function __construct($testPropertyOne='', $testPropertyTwo='')
+	public function __construct($testPropertyOne='', $testPropertyTwo='', $testPropertyThree='')
 	{
 		parent::__construct();
 		$this->setTestPropertyOne($testPropertyOne);
 		$this->setTestPropertyTwo($testPropertyTwo);
+		$this->setTestPropertyThree($testPropertyThree);
 	}
 	
 	/*
@@ -50,7 +55,8 @@ class TestObject extends Object
 	
 	public function setTestPropertyOne($testPropertyOne)
 	{
-		if(Validator::unsigned($testPropertyOne))
+		if($this->checkField("testPropertyOne", $testPropertyOne))
+//		if(Validator::unsigned($testPropertyOne))
 		{
 			$this->data->testPropertyOne = $testPropertyOne;
 			return true;
@@ -65,7 +71,8 @@ class TestObject extends Object
 	
 	public function setTestPropertyTwo($testPropertyTwo)
 	{
-		if(Validator::required($testPropertyTwo) && Validator::maxlength($testPropertyTwo, 10))
+		if($this->checkField("testPropertyTwo", $testPropertyTwo))
+//		if(Validator::required($testPropertyTwo) && Validator::maxlength($testPropertyTwo, 10))
 		{
 			$this->data->testPropertyTwo = $testPropertyTwo;
 			return true;
@@ -73,7 +80,7 @@ class TestObject extends Object
 		else
 		{
 			$this->data->testPropertyTwo = null;
-			$this->E->throwErr(1, "Invalid property set in setTestPropertyOne");
+			$this->E->throwErr(1, "Invalid property set in setTestPropertyTwo");
 			return false;
 		}
 	}

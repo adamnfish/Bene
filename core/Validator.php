@@ -16,7 +16,7 @@
 class Validator
 {
 	// default error strings
-	public $error_messages = array(
+	public static $error_messages = array(
 		"required" => "This field is required.",
 //		"remote" => "Please fix this field.",
 		"email" => "Please enter a valid email address.",
@@ -26,27 +26,16 @@ class Validator
 		"number" => "Please enter a valid number.",
 		"digits" => "Please enter only digits.",
 		"accept" => "Please enter a an allowed value.",
-		"maxlength" => "Please enter no more than {0} characters.",
-		"minlength" => "Please enter at least {0} characters.",
-		"rangelength" => "Please enter a value between {0} and {1} characters long.",
-		"range" => "Please enter a value between {0} and {1}.",
-		"max" => "Please enter a value less than or equal to {0}.",
-		"min" => "Please enter a value greater than or equal to {0}.",
+		"maxlength" => "Please enter no more than %d characters.",
+		"minlength" => "Please enter at least %d characters.",
+		"rangelength" => "Please enter a value between %d and %d characters long.",
+		"range" => "Please enter a value between %d and %d.",
+		"max" => "Please enter a value less than or equal to %d.",
+		"min" => "Please enter a value greater than or equal to %d.",
 		"equalTo" => "Please enter the same value again.",
 	
 		"unsigned" => "Please enter a positive number",
 		"pattern" => "Please enter a valid input" // this one shouldn't be used much for front-end - better to create a custom rule
-	);
-	
-	private $rules_with_args = array(
-		"minlength",
-		"maxlength",
-		"rangelenth",
-		"min",
-		"max",
-		"range",
-		"accept",
-		"pattern"
 	);
 	
 	private function __construct()
@@ -61,9 +50,20 @@ class Validator
 	 * @param String $type
 	 * @return unknown_type
 	 */
-	public function getErrorMessage($type)
+	public function getErrorMessage($type, $params=array())
 	{
-		return $this->error_messages[$type];
+//		$error_messages = self::error_messages;
+		$error_messages = "error_messages";
+		$error_messages = Validator::$error_messages;
+		if(is_array($params))
+		{
+			$error = vprintf($error_messages[$type], $params);
+		}
+		else
+		{
+			$error = sprintf($error_messages[$type], $params);
+		}
+		return $error;
 	}
 	
 	/**
@@ -106,7 +106,7 @@ class Validator
 	// should these return the error message?
 	// a bool makes more sense really, but it's being used as a static class
 	
-	public function required($value)
+	public function required($value, $param=true)
 	{
 		return !!strlen($value);
 	}
@@ -220,7 +220,7 @@ class Validator
 		{
 			if(is_numeric($value))
 			{
-				return $value >= $range[0] && $value >= $range[1];
+				return $value >= $range[0] && $value <= $range[1];
 			}
 		}
 		return false;
@@ -233,7 +233,7 @@ class Validator
 	 * @param Bool $required (default false) if it isn't required, allows a length of 0
 	 * @return Bool
 	 */
-	public function email($value, $required=false)
+	public function email($value, $param=true, $required=false)
 	{
 		if(false === $required || true === Validator::required($value))
 		{
@@ -249,7 +249,7 @@ class Validator
 	 * @param Bool $required (default false) if it isn't required, allows a length of 0
 	 * @return Bool
 	 */
-	public function url($value, $required=false)
+	public function url($value, $param=true, $required=false)
 	{
 		if(false === $required || true === Validator::required($value))
 		{
@@ -266,7 +266,7 @@ class Validator
 	 * @param Bool $required (default false) if it isn't required, allows a length of 0
 	 * @return Bool
 	 */
-	public function date($value, $required=false)
+	public function date($value, $param=true, $required=false)
 	{
 		if(false === $required || true === Validator::required($value))
 		{
@@ -283,7 +283,7 @@ class Validator
 	 * @param Bool $required (default false) if it isn't required, allows a length of 0
 	 * @return Bool
 	 */
-	public function dateISO($value, $required=false)
+	public function dateISO($value, $param=true, $required=false)
 	{
 		if(false === $required || true === Validator::required($value))
 		{
@@ -300,13 +300,21 @@ class Validator
 	 * @param Bool $required (default false) if it isn't required, allows a length of 0
 	 * @return Bool
 	 */
-	public function number($value, $required=false)
+	public function number($value, $param=true, $required=false)
 	{
-		if(false === $required || true === Validator::required($value))
+		$exists = Validator::required($value);
+		if(true === $required && false === $exists)
+		{
+			return false;
+		}
+		else if(false == $required && false === $exists)
+		{
+			return true;
+		}
+		else
 		{
 			return is_numeric($value);
 		}
-		return false;
 	}
 	
 	/**
@@ -316,7 +324,7 @@ class Validator
 	 * @param Bool $required (default false) if it isn't required, allows a length of 0
 	 * @return Bool
 	 */
-	public function digits($value, $required=false)
+	public function digits($value, $param=true, $required=false)
 	{
 		if(false === $required || true === Validator::required($value))
 		{
@@ -357,7 +365,7 @@ class Validator
 	 * @param Bool $required
 	 * @return Bool
 	 */
-	public function unsigned($value, $required=false)
+	public function unsigned($value, $param=true, $required=false)
 	{
 		if(false === $required || true === Validator::required($value))
 		{

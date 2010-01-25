@@ -131,13 +131,15 @@ class Data
 	 *
 	 *	TODO change db->quote for proper, secure, faster db->prepare
 	 */
-	public function select($tablename, $fieldnames="*", $conditions=false, $order=false, $desc=false, $count=false, $start='0')
+	public function select($tablename, $fieldnames="*", $conditions=false, $order=false, $desc=false, $count=0, $page=1)
 	{
 		// lazily connect
 //		if(!$this->connected)
 //		{
 //			$this->connect();
 //		}
+		$page -= 1;
+		$start = (--$page * $count);
 		if(is_array($fieldnames))
 		{
 			$fieldnames = implode(", ", $fieldnames);
@@ -157,26 +159,46 @@ class Data
 		{
 			$order = '';
 		}
-	
+		
 		if($count)
 		{
-			$limit = ' LIMIT ' . mysql_real_escape_string($start, $this->db) . ', ' . mysql_real_escape_string($count, $this->db);
+			if($page)
+			{
+				$limit = " LIMIT $start , $count;";
+			}
+			else
+			{
+				$limit = " LIMIT $count;";
+			}
 		}
 		else
 		{
-			$limit = '';
+			$limit = ";";
 		}
+		
 		$sql = "SELECT $fieldnames FROM `$tablename` WHERE $conditions$order$limit";
 
-		echo $sql;
-//		mysql_query($sql, $this->db);
+//		echo $sql;
+		mysql_query($sql, $this->db);		
+		$rslt = mysql_query($sql, $this->db);
+		$data = array();
+		while($row = mysql_fetch_assoc($rslt))
+		{
+			$data[] = $row;
+		}
+		if(false === $rslt)
+		{
+			mysql_error();
+		}
+		else
+		{
+			return $data;
+		}
 	}
 	
 	/**
 	 * convenience methods
 	 * might be better to put these into the subclasses?
-	 * 
-	 * These could be optimised, too (by not using $this->select, which has extra code to create the query from many arguments)
 	 * 
 	 * @param $table
 	 * @param $id
@@ -189,14 +211,34 @@ class Data
 //		return $this->select($table, '*', array($id_fieldname, $id));
 		
 		$sql = "SELECT * FROM `$tablename` WHERE `$id_fieldname` = '" . mysql_real_escape_string($id, $this->db) . "';";
-//		mysql_query($sql, $this->db);
-		echo $sql;
+
+		//		echo $sql;
+		$rslt = mysql_query($sql, $this->db);
+		if(false === $rslt)
+		{
+			mysql_error();
+		}
+		else
+		{
+			return mysql_fetch_assoc($rslt);
+		}
 		
 	}
 	
-	public function findAll($tablename, $count=0, $page=0)
+	/**
+	 * Finds all the records in a table
+	 * This method has pagination controls
+	 * Pagination is a zero-based index
+	 * 
+	 * @param String $tablename
+	 * @param Int $count
+	 * @param Int $page
+	 * @return unknown_type
+	 */
+	public function findAll($tablename, $count=0, $page=1)
 	{
 		// lazy connect happens in select
+		$page -= 1;
 		$start = ($page * $count);
 		
 		$sql = array();
@@ -217,7 +259,21 @@ class Data
 			$sql[] = ";";
 		}
 		
-		echo implode($sql, "");
+//		echo implode($sql, "");
+		$rslt = mysql_query(implode($sql, ""), $this->db);
+		$data = array();
+		while($row = mysql_fetch_assoc($rslt))
+		{
+			$data[] = $row;
+		}
+		if(false === $rslt)
+		{
+			mysql_error();
+		}
+		else
+		{
+			return $data;
+		}
 	}
 	
 	/**
@@ -228,7 +284,7 @@ class Data
 	 * @param $sql
 	 * @return unknown_type
 	 */
-	private function query($sql)
+	public function query($sql)
 	{
 		// lazily connect
 //		if(!$this->connected)
@@ -241,7 +297,19 @@ class Data
 		// or even something like create database!
 		// determine what to return accordingly
 		// because otherwise, this isn't dramatically useful
-		$this->db->query($sql);
+		// $this->db->query($sql);
+		$rslt = mysql_query($sql, $this->db);
+		if(false === $rslt)
+		{
+			// TODO make this more useful, eg using Errors class
+			mysql_error();
+		}
+		else
+		{
+			// TODO
+			// try and detect the type of $rslt
+			return $rslt;
+		}
 	}
 	
 	public function update($tablename, $data, $conditions, $limit=0)
@@ -265,9 +333,10 @@ class Data
 		$conditions = $this->conditions($conditions);
 		$limit = $limit ? " LIMIT $limit;" : ";";
 		$sql .= " WHERE $conditions$limit";
-		echo $sql;
 		
-//		mysql_query($sql, $this->db);
+//		echo $sql;
+		mysql_query($sql, $this->db);
+		return mysql_affected_rows($this->db);
 	}
 	
 	public function insert($tablename, $data)
@@ -283,10 +352,12 @@ class Data
 		{
 			$values[$i] = mysql_real_escape_string($values[$i], $this->db);
 		}
-		$sql = "INSERT INTO `$tablename` ('" . implode("', '", $fieldnames) . "') VALUES ('" . implode("', '", $values) . "');";
+		$sql = "INSERT INTO `$tablename` (`" . implode("`, `", $fieldnames) . "`) VALUES ('" . implode("', '", $values) . "');";
 		
-//		mysql_query($sql, $this->db);
-		echo $sql;
+//		echo $sql;
+		mysql_query($sql, $this->db);
+		return mysql_insert_id($this->db);
+		// should return the id
 	}
 	
 	public function delete($tablename, $conditions, $limit=0)
@@ -300,232 +371,9 @@ class Data
 		$limit = $limit ? " LIMIT $limit;" : ";";
 		$sql = "DELETE FROM `$tablename` WHERE $conditions$limit";
 		
-		echo $sql;
-//		mysql_query($qry, $this->db);
+//		echo $sql;
+		mysql_query($qry, $this->db);
 	}
 }
-
-/**
- * My inspiration:
- * 
- * @author http://www.phpro.org/classes/PDO-CRUD.html
- *
- */
-class crud
-{
-
-    private $db;
-
-    /**
-     *
-     * Set variables
-     *
-     */
-    public function __set($name, $value)
-    {
-        switch($name)
-        {
-            case 'username':
-            $this->username = $value;
-            break;
-
-            case 'password':
-            $this->password = $value;
-            break;
-
-            case 'dsn':
-            $this->dsn = $value;
-            break;
-
-            default:
-            throw new Exception("$name is invalid");
-        }
-    }
-
-    /**
-     *
-     * @check variables have default value
-     *
-     */
-    public function __isset($name)
-    {
-        switch($name)
-        {
-            case 'username':
-            $this->username = null;
-            break;
-
-            case 'password':
-            $this->password = null;
-            break;
-        }
-    }
-
-        /**
-         *
-         * @Connect to the database and set the error mode to Exception
-         *
-         * @Throws PDOException on failure
-         *
-         */
-        public function conn()
-        {
-            isset($this->username);
-            isset($this->password);
-            if (!$this->db instanceof PDO)
-            {
-                $this->db = new PDO($this->dsn, $this->username, $this->password);
-                $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            }
-        }
-
-
-        /***
-         *
-         * @select values from table
-         *
-         * @access public
-         *
-         * @param string $table The name of the table
-         *
-         * @param string $fieldname
-         *
-         * @param string $id
-         *
-         * @return array on success or throw PDOException on failure
-         *
-         */
-        public function dbSelect($table, $fieldname=null, $id=null)
-        {
-            $this->conn();
-            $sql = "SELECT * FROM `$table` WHERE `$fieldname`=:id";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindParam(':id', $id);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
-
-
-        /**
-         *
-         * @execute a raw query
-         *
-         * @access public
-         *
-         * @param string $sql
-         *
-         * @return array
-         *
-         */
-        public function rawSelect($sql)
-        {
-            $this->conn();
-            return $this->db->query($sql);
-        }
-
-        /**
-         *
-         * @run a raw query
-         *
-         * @param string The query to run
-         *
-         */
-        public function rawQuery($sql)
-        {
-            $this->conn();
-            $this->db->query($sql);
-        }
-
-
-        /**
-         *
-         * @Insert a value into a table
-         *
-         * @acces public
-         *
-         * @param string $table
-         *
-         * @param array $values
-         *
-         * @return int The last Insert Id on success or throw PDOexeption on failure
-         *
-         */
-        public function dbInsert($table, $values)
-        {
-            $this->conn();
-            /*** snarg the field names from the first array member ***/
-            $fieldnames = array_keys($values[0]);
-            /*** now build the query ***/
-            $size = sizeof($fieldnames);
-            $i = 1;
-            $sql = "INSERT INTO $table";
-            /*** set the field names ***/
-            $fields = '( ' . implode(' ,', $fieldnames) . ' )';
-            /*** set the placeholders ***/
-            $bound = '(:' . implode(', :', $fieldnames) . ' )';
-            /*** put the query together ***/
-            $sql .= $fields.' VALUES '.$bound;
-
-            /*** prepare and execute ***/
-            $stmt = $this->db->prepare($sql);
-            foreach($values as $vals)
-            {
-                $stmt->execute($vals);
-            }
-        }
-
-        /**
-         *
-         * @Update a value in a table
-         *
-         * @access public
-         *
-         * @param string $table
-         *
-         * @param string $fieldname, The field to be updated
-         *
-         * @param string $value The new value
-         *
-         * @param string $pk The primary key
-         *
-         * @param string $id The id
-         *
-         * @throws PDOException on failure
-         *
-         */
-        public function dbUpdate($table, $fieldname, $value, $pk, $id)
-        {
-            $this->conn();
-            $sql = "UPDATE `$table` SET `$fieldname`='{$value}' WHERE `$pk` = :id";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindParam(':id', $id, PDO::PARAM_STR);
-            $stmt->execute();
-        }
-
-
-        /**
-         *
-         * @Delete a record from a table
-         *
-         * @access public
-         *
-         * @param string $table
-         *
-         * @param string $fieldname
-         *
-         * @param string $id
-         *
-         * @throws PDOexception on failure
-         *
-         */
-        public function dbDelete($table, $fieldname, $id)
-        {
-            $this->conn();
-            $sql = "DELETE FROM `$table` WHERE `$fieldname` = :id";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bindParam(':id', $id, PDO::PARAM_STR);
-            $stmt->execute();
-        }
-    } /*** end of class ***/
 
 ?>
