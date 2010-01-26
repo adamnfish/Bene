@@ -57,7 +57,8 @@ abstract class Object
 	protected function __construct()
 	{
 		$this->E = Errors::instance();
-		$this->dataSource = Data::instance("test");
+		$this->data = new STDClass();
+		$this->dataSource = Data::instance();
 	}
 	
 	/**
@@ -94,7 +95,7 @@ abstract class Object
 					else
 					{
 						$this->data->$property = null;
-						$this->E->throwErr(1, "Invalid property set in $method");
+						$this->E->throwErr(1, "Invalid property set in $method", "", 0, 2);
 						return false;
 					}
 				}
@@ -300,6 +301,7 @@ abstract class Object
 		}
 		else
 		{
+			$this->E->throwErr(3, "Update had no effect");
 			return false;
 		}
 	}
@@ -417,13 +419,13 @@ abstract class Object
 	 * @param Mixed $value
 	 * @return Bool
 	 */
-	public function checkField($fieldname, $value=false)
+	public function checkField($property, $value=false)
 	{
-		if(false === $value)
+		if(false === $value && isset($this->data->$property))
 		{
-			$value = $this->data->{$fieldname};
+			$value = $this->data->$property;
 		}
-		$rules = $this->rules[$fieldname];
+		$rules = $this->rules[$property];
 		foreach($rules as $rule => $param)
 		{
 			if(true !== Validator::$rule($value, $param))
@@ -446,12 +448,14 @@ abstract class Object
 		$this->valid = true;
 		foreach($this->properties as $property)
 		{
-			if(false === checkField($property))
+			$fieldValid = $this->checkField($property);
+			if(false === $fieldValid)
 			{
 				$this->valid = false;
 				return false;
 			}
 		}
+		return true;
 	}
 	
 	/*

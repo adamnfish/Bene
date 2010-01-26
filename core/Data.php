@@ -13,14 +13,14 @@
  * Each extension should be a singleton
  * These data sources are passed to the mapper's constructor, or used directly for more 'custom' foo (eg, specific queries, or db level stuff)
  */
-
 $Data_instance;
 class Data
 {
 	private static $data_instance;
 	
 	private $db;
-	private $connected = false;
+	private $E;
+	private $connected = false;// not used
 	
 	/**
 	 * make this a singleton
@@ -32,7 +32,7 @@ class Data
 	private function __construct()
 	{
 		global $db;
-		global $Data_instance;
+/*		global $Data_instance;
 		if($Data_instance)
 		{
 			return $Data_instance;
@@ -40,8 +40,9 @@ class Data
 		else
 		{
 			$Data_instance &= $this;
-		}
+		}*/
 		$this->db = $db;
+		$this->E = Errors::instance();
 	}
 	
 	public function instance()
@@ -188,7 +189,7 @@ class Data
 		}
 		if(false === $rslt)
 		{
-			mysql_error();
+			$this->E->throwErr(2, mysql_error($this->db));
 		}
 		else
 		{
@@ -216,7 +217,7 @@ class Data
 		$rslt = mysql_query($sql, $this->db);
 		if(false === $rslt)
 		{
-			mysql_error();
+			$this->E->throwErr(2, mysql_error($this->db));
 		}
 		else
 		{
@@ -268,7 +269,7 @@ class Data
 		}
 		if(false === $rslt)
 		{
-			mysql_error();
+			$this->E->throwErr(2, mysql_error($this->db));
 		}
 		else
 		{
@@ -302,7 +303,7 @@ class Data
 		if(false === $rslt)
 		{
 			// TODO make this more useful, eg using Errors class
-			mysql_error();
+			$this->E->throwErr(2, mysql_error($this->db));
 		}
 		else
 		{
@@ -335,7 +336,12 @@ class Data
 		$sql .= " WHERE $conditions$limit";
 		
 //		echo $sql;
-		mysql_query($sql, $this->db);
+		$rslt = mysql_query($sql, $this->db);
+		if(false === $rslt)
+		{
+			$this->E->throwErr(2, mysql_error($this->db));
+			return false;
+		}
 		return mysql_affected_rows($this->db);
 	}
 	
@@ -353,9 +359,13 @@ class Data
 			$values[$i] = mysql_real_escape_string($values[$i], $this->db);
 		}
 		$sql = "INSERT INTO `$tablename` (`" . implode("`, `", $fieldnames) . "`) VALUES ('" . implode("', '", $values) . "');";
-		
 //		echo $sql;
-		mysql_query($sql, $this->db);
+		$rslt = mysql_query($sql, $this->db);
+		if(false === $rslt)
+		{
+			$this->E->throwErr(2, mysql_error($this->db));
+			return false;
+		}
 		return mysql_insert_id($this->db);
 		// should return the id
 	}
@@ -372,7 +382,13 @@ class Data
 		$sql = "DELETE FROM `$tablename` WHERE $conditions$limit";
 		
 //		echo $sql;
-		mysql_query($qry, $this->db);
+		$rslt = mysql_query($qry, $this->db);
+		if(false === $rslt)
+		{
+			$this->E->throwErr(2, mysql_error($this->db));
+			return false;
+		}
+		return mysql_affected_rows($this->db);
 	}
 }
 

@@ -10,7 +10,7 @@
  * TODO work out how to manage fieldname clashes
  * 
  */
-class Form
+class UserPrefsForm
 {
 	// holds the values for the form
 	private $data = array();

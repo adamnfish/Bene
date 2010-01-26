@@ -46,17 +46,12 @@ class Errors
 		$this->log_level = $log_level;
 	}
 	
-	public function throwErr($type, $message, $details="", $code=0, $line=-1, $file="")
+	public function throwErr($type, $message, $details="", $code=0, $stackOffset=0)
 	{
 		$stack = debug_backtrace();
-		if(-1 === $line)
-		{
-			$line = $stack[0]['line'];
-		}
-		if("" === $file)
-		{
-			$file = $stack[0]['file'];
-		}
+		$line = $stack[$stackOffset]['line'];
+		$file = $stack[$stackOffset]['file'];
+		
 		$error = new Error($type, $message, $line, $file, $details, $code);
 		$this->errors[] = $error;
 		return $error;

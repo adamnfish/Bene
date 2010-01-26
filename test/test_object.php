@@ -11,7 +11,7 @@ require_once("../core/Validator.php");
 require_once("../core/Test.php");
 // models
 require_once("./TestObject.php");
-require_once("../models/Title.php");
+require_once("../models/Title_old.php");
 
 $db = mysql_connect("127.0.0.1", "root", "");
 mysql_select_db("fcc_prefs_dev", $db);
@@ -74,7 +74,7 @@ class ObjectTest extends Test
 		$title4->setTitle("Dr");
 		$this->assert($title4->save(), "should save title 4");
 		
-		$title5 = new Title(false, "Mrs");
+		$title5 = new Title(null, "Mrs");
 		$this->assert($title5->save(), "should save title 5");
 		$titles = $title->findAll();
 		$this->assertCount($titles, 3, "Should be 3 results");
@@ -92,6 +92,16 @@ class ObjectTest extends Test
 		
 		$selected = $title->select(array("title_id", ">", 1));
 		$this->assertCount($selected, 2, "Select should return 2 records");
+	}
+	
+	public function test_objectIsValid()
+	{
+		$title = new Title();
+		$this->assertFalse($title->isValid(), "Empty object should be invalid");
+		$title->setTitle("Mr");
+		$this->assertTrue($title->isValid(), "Object should now be valid");
+		$title->setTitle("Mr I have a name that is too long");
+		$this->assertFalse($title->isValid(), "Object should be invalid again");
 	}
 	
 	public function teardown()

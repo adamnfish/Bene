@@ -65,7 +65,26 @@ class Validator
 		}
 		return $error;
 	}
-	
+/*
+	public function getErrorMessages($forJS=false)
+	{
+		$error_messages = "error_messages";
+		$errors = Validator::$error_messages;
+		if($forJS)
+		{
+			// need to convert the vprintf style %d wildcards to {0}, {1} for the jQuery validator
+			foreach($errors as $type => $error)
+			{
+				$i = 0;
+				while(false !== strpos($error, "%d"))
+				{
+					str_replace("%d", "\{$i\}", $error, 1);
+				}
+			}
+		}
+		return $errors;
+	}
+	*/
 	/**
 	 * Will check a value against an array of rules (basically, like the jQuery validator rule JSON object)
 	 * eg.
@@ -121,6 +140,10 @@ class Validator
 	 */
 	public function minlength($value, $minlength, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			return $minlength <= strlen($value);
@@ -138,6 +161,10 @@ class Validator
 	 */
 	public function maxlength($value, $maxlength, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			return $maxlength >= strlen($value);
@@ -155,6 +182,10 @@ class Validator
 	 */
 	public function rangelength($value, $lengths, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			$l = strlen($value);
@@ -176,6 +207,10 @@ class Validator
 		// better implementation of the required stuff (will make the right error message appear in those cases)
 		// TODO use this implementation for all the methods
 		// this will mean the required error message is always triggered before eg. 'must be less than 8 chars'
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			if(is_numeric($value))
@@ -196,6 +231,10 @@ class Validator
 	 */
 	public function max($value, $max, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			if(is_numeric($value))
@@ -216,6 +255,10 @@ class Validator
 	 */
 	public function range($value, $range, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			if(is_numeric($value))
@@ -235,6 +278,10 @@ class Validator
 	 */
 	public function email($value, $param=true, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			return !!preg_match("/^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i", $value);
@@ -251,6 +298,10 @@ class Validator
 	 */
 	public function url($value, $param=true, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			return !!preg_match("/^(https?|ftp):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i", $value);
@@ -268,6 +319,10 @@ class Validator
 	 */
 	public function date($value, $param=true, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			$date = strtotime($value);
@@ -285,6 +340,10 @@ class Validator
 	 */
 	public function dateISO($value, $param=true, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			return !!preg_match("/^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}$/", $value);
@@ -302,16 +361,11 @@ class Validator
 	 */
 	public function number($value, $param=true, $required=false)
 	{
-		$exists = Validator::required($value);
-		if(true === $required && false === $exists)
-		{
-			return false;
-		}
-		else if(false == $required && false === $exists)
+		if(false === $required && false === Validator::required($value))
 		{
 			return true;
 		}
-		else
+		if(false === $required || true === Validator::required($value))
 		{
 			return is_numeric($value);
 		}
@@ -326,9 +380,13 @@ class Validator
 	 */
 	public function digits($value, $param=true, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
-			return $this->number($value, $required) && floor($value) == $value;
+			return Validator::number($value, true, $required) && floor($value) == $value;
 		}
 		return false;
 	}
@@ -343,6 +401,10 @@ class Validator
 	 */
 	public function accept($value, $accepts, $required)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			if(is_string)
@@ -367,6 +429,10 @@ class Validator
 	 */
 	public function unsigned($value, $param=true, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			return self::number($value) && 0 <= $value;
@@ -387,6 +453,10 @@ class Validator
 	 */
 	public function pattern($value, $pattern, $required=false)
 	{
+		if(false === $required && false === Validator::required($value))
+		{
+			return true;
+		}
 		if(false === $required || true === Validator::required($value))
 		{
 			return !!preg_match($pattern, $value);

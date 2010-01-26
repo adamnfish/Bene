@@ -12,7 +12,7 @@ require_once("../core/Form.php");
 require_once("../core/Test.php");
 // models
 require_once("./TestObject.php");
-require_once("../models/Title.php");
+require_once("../models/Title_old.php");
 
 $db = mysql_connect("127.0.0.1", "root", "");
 mysql_select_db("fcc_prefs_dev", $db);
@@ -23,7 +23,7 @@ class FormTest extends Test
 	public function test_formBasic()
 	{
 		$title = new Title(1, "Mr");
-		$form = new Form($title);
+		$form = new UserPrefsForm($title);
 		$this->assertEqual($form->get("title"), "Mr", "form should contain a title field with Mr");
 		$this->assertTrue($form->isValid(), "form should be valid");
 		
@@ -35,7 +35,7 @@ class FormTest extends Test
 	public function test_form2()
 	{
 		$title = new Title();
-		$form = new Form($title);
+		$form = new UserPrefsForm($title);
 		$this->assertFalse($form->isValid(), "form should be invalid");
 		$this->assertEqual($form->validationError("title"), "This field is required.", "'Required' error message should  have been thrown for title");
 		$this->assertNull($form->validationError("titleId"), "Empty primary field shouldn't throw an error");
@@ -43,7 +43,7 @@ class FormTest extends Test
 	
 	public function test_addingField()
 	{
-		$form = new Form();
+		$form = new UserPrefsForm();
 		$form->addField("testField", array('required' => true));
 		$this->assertFalse($form->isValid(), "The new field should be invalid");
 		$this->assertEqual($form->validationError("testField"), "This field is required.", "new field should have a 'required' error");
