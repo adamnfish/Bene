@@ -38,7 +38,7 @@ class FormTest extends Test
 		$form = new UserPrefsForm($title);
 		$this->assertFalse($form->isValid(), "form should be invalid");
 		$this->assertEqual($form->validationError("title"), "This field is required.", "'Required' error message should  have been thrown for title");
-		$this->assertNull($form->validationError("titleId"), "Empty primary field shouldn't throw an error");
+		$this->assertEqual($form->validationError("titleId"), '', "Empty primary field shouldn't throw an error");
 	}
 	
 	public function test_addingField()

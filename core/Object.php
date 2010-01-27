@@ -350,6 +350,7 @@ abstract class Object
 		else
 		{
 			// error
+			return false;
 		}
 	}
 	
@@ -359,11 +360,15 @@ abstract class Object
 	 * Pagination uses a 1-based index in the model
 	 * @return unknown_type
 	 */
-	public function findAll($count=0, $page=1)
+	public function findAll($count=0, $page=1, $raw=false)
 	{
 		$data = $this->dataSource->findAll($this->tablename, $count, $page);
 		if(is_array($data))
 		{
+			if($raw)
+			{
+				return $data;
+			}
 			$objects = array();
 			$class = get_class($this);
 			foreach($data as $object_data)
@@ -377,6 +382,35 @@ abstract class Object
 		else
 		{
 			// error
+			return false;
+		}
+	}
+	
+	public function findSelectOptions($fieldnames, $conditions=array(), $order=false, $desc=false, $count=0, $page=1)
+	{
+		// TODO translate property names to fieldnames
+		$rslts = $this->dataSource->select($this->tablename, $fieldnames, $conditions, $order, $desc, $count, $page);
+		if(is_array($rslts))
+		{
+			//var_dump($rslts);
+			$data = array();
+			foreach($rslts as $rslt)
+			{
+				$values = array_values($rslt);
+				if(2 <= count($values))
+				{
+					$data[$values[0]] = $values[1];
+				}
+				else
+				{
+					$data[$values[0]] = $values[0];
+				}
+			}
+			return $data;
+		}
+		else
+		{
+			return false;
 		}
 	}
 	
@@ -384,7 +418,7 @@ abstract class Object
 	 * General select
 	 * @return unknown_type
 	 */
-	public function select($conditions=false, $order=false, $desc=false, $count=false, $page=1)
+	public function select($conditions=false, $order=false, $desc=false, $count=0, $page=1)
 	{
 		$data = $this->dataSource->select($this->tablename, "*", $conditions, $order, $desc, $count, $page);
 		if(is_array($data))

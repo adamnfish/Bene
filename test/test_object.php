@@ -82,6 +82,18 @@ class ObjectTest extends Test
 		$this->assertEqual($titles[1]->getTitle(), "Dr", "second result should be Dr");
 		$this->assertEqual($titles[2]->getTitle(), "Mrs", "third result should be Mrs");
 		
+		$selectBoxTitles = $title->findSelectOptions("title_id,title");
+		$this->assertCount($selectBoxTitles, 3, "Should have found 3 titles for the select box data");
+		$this->assertEqual($selectBoxTitles[1], "Mr", "The first found title for select box data should be 1 => 'Mr'");
+		$this->assertEqual($selectBoxTitles[2], "Dr", "The second found title for select box data should be 2 => 'Dr'");
+		$this->assertEqual($selectBoxTitles[3], "Mrs", "The second found title for select box data should be 3 => 'Mrs'");
+		
+		$selectBoxTitles = $title->findSelectOptions("title");
+		$this->assertCount($selectBoxTitles, 3, "Should have found 3 titles for the select box data");
+		$this->assertEqual($selectBoxTitles["Mr"], "Mr", "The first found title for select box data should be 'Mr' => 'Mr'");
+		$this->assertEqual($selectBoxTitles["Dr"], "Dr", "The second found title for select box data should be 'Dr' => 'Dr'");
+		$this->assertEqual($selectBoxTitles["Mrs"], "Mrs", "The second found title for select box data should be 'Mrs' => 'Mrs'");
+		
 		$titles_1 = $title->findAll(2, 1);
 		$this->assertCount($titles_1, 2, "Find all with a limit of 2 should return 2 records");
 		$this->assertEqual($titles_1[1]->getTitle(), "Dr", "second record in paginated findAll should be Dr");
@@ -102,6 +114,21 @@ class ObjectTest extends Test
 		$this->assertTrue($title->isValid(), "Object should now be valid");
 		$title->setTitle("Mr I have a name that is too long");
 		$this->assertFalse($title->isValid(), "Object should be invalid again");
+	}
+	
+	public function test_populate()
+	{
+		$field_data = array("title_id" => 1, "title" => "Mr");
+		$title1 = new Title();
+		$title1->populate($field_data, true);
+		$this->assertEqual($title1->getTitleId(), $field_data["title_id"], "Should have correctly set the title id from the field data");
+		$this->assertEqual($title1->getTitle(), $field_data["title"], "Should have correctly set the title from the field data");
+
+		$property_data = array("titleId" => 2, "title" => "Mrs");
+		$title2 = new Title();
+		$title2->populate($property_data);
+		$this->assertEqual($title2->getTitleId(), $property_data["titleId"], "Should have correctly set the title id from the property data");
+		$this->assertEqual($title2->getTitle(), $property_data["title"], "Should have correctly set the title from the property data");
 	}
 	
 	public function teardown()

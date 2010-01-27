@@ -29,27 +29,19 @@ class Data
 	 * @return unknown_type
 	 */
 	//public function __construct($data=false)
-	private function __construct()
+	private function __construct($database)
 	{
 		global $db;
-/*		global $Data_instance;
-		if($Data_instance)
-		{
-			return $Data_instance;
-		}
-		else
-		{
-			$Data_instance &= $this;
-		}*/
-		$this->db = $db;
+		$this->db = $database ? $database : $db;
+
 		$this->E = Errors::instance();
 	}
 	
-	public function instance()
+	public function instance($db=false)
 	{
 		if (!isset(self::$data_instance)) {
             $c = __CLASS__;
-            self::$data_instance = new $c;
+            self::$data_instance = new $c($db);
         }
 
         return self::$data_instance;
@@ -76,7 +68,7 @@ class Data
 	
 	private function conditions($conditions)
 	{
-		if(is_array($conditions) && is_array($conditions[0]))
+		if(is_array($conditions) && isset($conditions[0]) && is_array($conditions[0]))
 		{
 			// build conditions string from array - otherwise we'll assume it's a string for performance's sake
 			$query_conditions = array();
@@ -102,6 +94,10 @@ class Data
 		elseif(2 === count($conditionArray))
 		{
 			$condition = '`' . $conditionArray[0] . "` = '" . mysql_real_escape_string($conditionArray[1], $this->db) . "'";
+		}
+		elseif(0 === count($conditionArray))
+		{
+			return "true";
 		}
 		return $condition;
 	}
@@ -180,6 +176,7 @@ class Data
 		$sql = "SELECT $fieldnames FROM `$tablename` WHERE $conditions$order$limit";
 
 //		echo $sql;
+
 		mysql_query($sql, $this->db);		
 		$rslt = mysql_query($sql, $this->db);
 		$data = array();

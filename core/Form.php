@@ -139,6 +139,20 @@ class UserPrefsForm
 		}
 	}
 	
+	public function addFieldFromObject($obj, $name)
+	{
+		if($obj instanceof Object)
+		{
+			if(in_array($name, $obj->properties()))
+			{
+				$getter = "get" . substr($name, 0, 1) . substr($name, 1);
+				$this->addField($name, $obj->rules($name), $obj->$getter());
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * Removes a field from the form
 	 * @param unknown_type $name
@@ -149,6 +163,7 @@ class UserPrefsForm
 		$this->fields = array_diff($this->fields, array($name));
 		unset($this->rules[$name]);
 		unset($this->errors[$name]);
+		unset($this->data[$name]);
 		$this->validated = false;
 	}
 	
@@ -205,6 +220,39 @@ class UserPrefsForm
 	}
 	
 	/**
+	 * Removes a bunch of fields, according to the provided filters
+	 * 
+	 * @param unknown_type $filters
+	 * @return unknown_type
+	 */
+	public function filterFields($filters=array('/Id$/', '/^created$/i', '/^modified$/i'), $exceptions=array())
+	{
+		foreach($this->fields as $field)
+		{
+			if(false === in_array($field, $exceptions))
+			{
+				foreach($filters as $filter)
+				{
+					if(preg_match($filter, $field))
+					{
+						$this->removeField($field);
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Returns array of current fields
+	 * @return unknown_type
+	 */
+	public function fields()
+	{
+		return $this->fields;
+	}
+	
+	/**
 	 * Adds rules for a field
 	 * Is this really necessary?
 	 * merges the field's current rules array with the passed one
@@ -248,6 +296,15 @@ class UserPrefsForm
 	public function get($name)
 	{
 		return $this->data[$name];
+	}
+	
+	/**
+	 * Returns the current for data
+	 * @return unknown_type
+	 */
+	public function data()
+	{
+		return $this->data;
 	}
 	
 	/*
@@ -366,7 +423,7 @@ class UserPrefsForm
 	 */
 	public function validationError($field)
 	{
-		return $this->errors[$field];
+		return isset($this->errors[$field]) ? $this->errors[$field] : "";
 	}
 	
 	/**
