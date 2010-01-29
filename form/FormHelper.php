@@ -42,6 +42,16 @@ class FormHelper
 		return implode('', $html);
 	}
 	
+	private function output($html)
+	{
+		$html = implode("", $html);
+		if($this->echo)
+		{
+			echo $html;
+		}
+		return $html;
+	}
+	
 	/**
 	 * I suspect, I'll ened to have (for the JS validation integration):
 	 * <div class='error'><span whatevs>error</span></div>
@@ -52,59 +62,64 @@ class FormHelper
 	 * @param unknown_type $error
 	 * @return unknown_type
 	 */
-	private function error($error)
+	private function error($error, $type='')
 	{
-		
+		$errorHTML = $error ? "<div class='error $type'><img src='img/user_prefs_form_error.png' alt='error' />$error</div>" : "<div class='error text'></div>";
+		return $errorHTML;
 	}
 	
 	public function formTop($name, $method='post', $action='', $attrs=array())
 	{
-		$html = "<form name='$name' method='$method' action='' class='userprefsform'>";
-		if($this->echo)
-		{
-			echo $html;
-		}
-		return $html;
+		$html = Array();
+		$html[] = "<form name='$name' method='$method' action='' class='userprefsform'>";
+		return $this->output($html);
 	}
 	
 	public function formBottom()
 	{
-		$html = "</form>";
-		if($this->echo)
-		{
-			echo $html;
-		}
-		return $html;
+		$html = Array();
+		$html[] = "</form>";
+		return $this->output($html);
 	}
 	
 	public function fieldTop($class='field')
 	{
-		$html = "<div class='$class'>";
-		if($this->echo)
-		{
-			echo $html;
-		}
-		return $html;
+		$html = Array();
+		$html[] = "<div class='$class'>";
+		return $this->output($html);
 	}
 	
 	public function fieldBottom()
 	{
-		$html = "</div>";
-		if($this->echo)
-		{
-			echo $html;
-		}
-		return $html;
+		$html = Array();
+		$html[] = "</div>";
+		return $this->output($html);
 	}
 	
 	public function sectionHeading($text)
 	{
-		$html = "<h2>$text</h2>";
-		if($this->echo)
+		$html = Array();
+		$html[] = "<h2>$text</h2>";
+		return $this->output($html);
+	}
+	
+	public function message($text, $error=true)
+	{
+		if($text)
 		{
-			echo $html;
+			$html = Array();
+			$html[] = "<p";
+			if($error)
+			{
+				$html[] = " class='errorfeedback'";
+			}
+			$html[] = ">$text</p>\n";
+			return $this->output($html);
 		}
-		return $html;
+		else
+		{
+			return "";
+		}
 	}
 	
 	public function text($name, $label, $attrs=array(), $additional=array(), $value='', $error='')
@@ -114,15 +129,23 @@ class FormHelper
 		$attrs = $this->attrsToHTML($attrs);
 		$html = array();
 		$html[] = $this->fieldTop();
-		$html[] = "<div class='error text'>$error</div>";
+		$html[] = $this->error($error, 'text');
 		$html[] = "<label class='text' for='$name'>$label</label><input type='text' id='$name' name='$name' value='$value' $attrs/>";
 		$html[] = $this->fieldBottom();
-		$html = implode("", $html);
-		if($this->echo)
-		{
-			echo $html;
-		}
-		return $html;
+		return $this->output($html);
+	}
+	
+	public function email($name, $label, $attrs=array(), $additional=array(), $value='', $error='')
+	{
+		$error = $error ? $error : $this->form->validationError($name);
+		$value = $value ? $value : $this->form->get($name);
+		$attrs = $this->attrsToHTML($attrs);
+		$html = array();
+		$html[] = $this->fieldTop();
+		$html[] = $this->error($error, 'text email');
+		$html[] = "<label class='text email' for='$name'>$label</label><input type='email' id='$name' name='$name' value='$value' $attrs/>";
+		$html[] = $this->fieldBottom();
+		return $this->output($html);
 	}
 	
 	public function submit($name, $value='', $attrs=array(), $additional=array(), $error='')
@@ -130,15 +153,10 @@ class FormHelper
 		$attrs = $this->attrsToHTML($attrs);
 		$html = array();
 		$html[] = $this->fieldTop("submit");
-		$html[] = "<div class='error'>$error</div>";
+		$html[] = $this->error($error, 'submit');
 		$html[] = "<input type='submit' class='submit' id='$name' name='$name' value='$value' $attrs/>";
 		$html[] = $this->fieldBottom();
-		$html = implode("", $html);
-		if($this->echo)
-		{
-			echo $html;
-		}
-		return $html;
+		return $this->output($html);
 	}
 	
 	public function textarea($name, $label, $attrs=array("rows"=>5), $additional=array(), $value='', $error='')
@@ -148,39 +166,27 @@ class FormHelper
 		$attrs = $this->attrsToHTML($attrs);
 		$html = array();
 		$html[] = $this->fieldTop();
-		$html[] = "<div class='error textarea'>$error</div>";
+		$html[] = $this->error($error, 'textarea');
 		$html[] = "<label class='textarea' for='$name'>$label</label><br /><textarea id='$name' name='$name' $attrs>$value</textarea>";
 		$html[] = $this->fieldBottom();
-		$html = implode("", $html);
-		if($this->echo)
-		{
-			echo $html;
-		}
-		return $html;
+		return $this->output($html);
 	}
 	
-	public function checkbox($name, $label, $options, $attrs=array(), $additional=array(), $value='', $error='')
+	public function checkbox($name, $label, $optionValue, $attrs=array(), $additional=array(), $value='', $error='')
 	{
 		$error = $error ? $error : $this->form->validationError($name);
 		$value = $value ? $value : $this->form->get($name);
 		$attrs = $this->attrsToHTML($attrs);
 		$html = array();
 		$html[] = $this->fieldTop();
-		$html[] = "<div class='error checkbox'>$error</div>";
-		$html[] = "<label class='checkboxgroup'>$label</label>";
-		foreach($options as $optionLabel => $option)
-		{
-			$checked = ($value == $option) ? "checked='checked'" : "";
-			$html[] = "<label class='checkbox' for='{$name}_{$option}'>$optionLabel</label>";
-			$html[] = "<input type='checkbox' name='{$name}_{$option}' id='{$name}_{$option}' value='$option' $checked/>";
-		}
+		$html[] = $this->error($error, 'checkbox');
+
+		$checked = ($value == $optionValue) ? "checked='checked'" : "";
+		$html[] = "<input type='checkbox' name='{$name}' id='{$name}' value='$optionValue' $checked/>";
+		$html[] = "<label class='checkbox single' for='{$name}'>$label</label>";
+		
 		$html[] = $this->fieldBottom();
-		$html = implode("", $html);
-		if($this->echo)
-		{
-			echo $html;
-		}
-		return $html;
+		return $this->output($html);
 	}
 	
 	public function select($name, $label, $options, $attrs=array(), $additional=array(), $value='', $error='')
@@ -190,15 +196,10 @@ class FormHelper
 		$attrs = $this->attrsToHTML($attrs);
 		$html = array();
 		$html[] = $this->fieldTop();
-		$html[] = "<div class='error select'>$error</div>";
+		$html[] = $this->error($error, 'select');
 		$html[] = "<label class='select' for='$name'>$label</label><select id='$name' name='$name'$attrs>" . $this->options($options, $value) . "</select>";
 		$html[] = $this->fieldBottom();
-		$html = implode("", $html);
-		if($this->echo)
-		{
-			echo $html;
-		}
-		return $html;
+		return $this->output($html);
 	}
 	
 	private function options($options, $value)

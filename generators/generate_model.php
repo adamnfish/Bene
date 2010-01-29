@@ -29,20 +29,54 @@ class GenerateModels
 		$this->db = Data::instance();
 	}
 	
-	public function autoGenerate($dir)
+	public function autoGenerate($dir, $included_tables=false, $excluded_tables=false, $stubs=false)
 	{
+		if(is_string($included_tables))
+		{
+			$included_tables = array($included_tables);
+		}
+		if(is_string($excleded_tables))
+		{
+			$excleded_tables = array($excleded_tables);
+		}
 		$tables = $this->getTables();
 		$done = array();
 		foreach($tables as $table)
 		{
+			if(is_array($excluded_tables))
+			{
+				if(in_array($table, $excluded_tables))
+				{
+					continue;
+				}
+			}
+			if(is_array($included_tables))
+			{
+				if(false === in_array($table, $included_tables))
+				{
+					continue;
+				}
+			}
 			$info = $this->getTableInfo($table);
 			$model = $this->generateModel($table, $info);
-			$path = $dir . "/" . $this->modelName($table) . ".php";
+			$path = $dir . "/" . $this->modelName($table) . "_core.php";
 			$this->writeFile($path, $model);
 			$done[] = $path;
+			if($stubs)
+			{
+				$stub_name = $this->modelName($table);
+				$stub_source = $this->modelHead($stub_name, $stub_name . "_core")
+				. $this->modelFoot();
+				$stub_path = dirname($dir);
+				$stub_file = $stub_path . "/" . $this->modelName($stub_name) . ".php";;
+				$this->writeFile($stub_file, $stub_source);
+			}
 		}
-		echo "Written model files:\n\n";
-		var_dump($done);
+		echo "<p>Written model files:\n\n</p>";
+		foreach($done as $modelFile)
+		{
+			echo "$modelFile<br />\n";
+		}
 	}
 	
     private function camelcase($string, $firstUpper=false)
@@ -174,6 +208,12 @@ class GenerateModels
 					$rules[$property]['maxlength'] = $matches[1];
 				}
 			}
+			if(0 === strpos($field['Type'], "enum("))
+			{
+				// $accept
+				eval("\$accept = " . str_replace('enum(', 'array(', $field['Type']) . ";");
+				$rules[$property] = $accept;
+			}
 			
 			// not null -> required
 			if(false !== strpos($field['Null'], "NO"))
@@ -200,7 +240,7 @@ class GenerateModels
 		var_dump("fieldnames", $fieldnames);
 		var_dump("key: $key", "name: $name", "tablename $tablename");
 		*/
-		$source = $this->modelHead($name)
+		$source = $this->modelHead($name . "_core")
 					. $this->modelProperties($properties)
 					. $this->modelFieldnames($fieldnames)
 					. $this->modelRules($rules)
@@ -216,11 +256,11 @@ class GenerateModels
 		
 //	}
 
-	private function modelHead($name)
+	private function modelHead($name, $extends='Object')
 	{
 		$source = <<<HEAD
 <?php
-class $name extends Object
+class $name extends $extends
 {
 
 HEAD;
@@ -312,5 +352,5 @@ $info = $generator->getTableInfo($test_table);
 $generator->generateModel($test_table, $info);
 */
 $generator = new GenerateModels();
-$generator->autoGenerate(dirname(dirname(__FILE__)) . "/models");
+$generator->autoGenerate(dirname(dirname(__FILE__)) . "/models/generated", false, false, true);
 ?>

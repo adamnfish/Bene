@@ -320,7 +320,7 @@ class UserPrefsForm
 	{
 		foreach($data as $field => $value)
 		{
-			if(key_exists($field, $this->fields))
+			if(in_array($field, $this->fields))
 			{
 				$this->set($field, $value);
 			}
@@ -362,6 +362,10 @@ class UserPrefsForm
 		{
 			if(false === Validator::$rule($this->data[$field], $param))
 			{
+				if(!is_array($param))
+				{
+					$param = array($param);
+				}
 				$this->errors[$field] = Validator::getErrorMessage($rule, $param);
 				return false;
 			}

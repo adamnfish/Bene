@@ -360,7 +360,7 @@ class Data
 		$rslt = mysql_query($sql, $this->db);
 		if(false === $rslt)
 		{
-			$this->E->throwErr(2, mysql_error($this->db));
+			$this->E->throwErr(2, mysql_error($this->db), 'mysql error', 0, 2);
 			return false;
 		}
 		return mysql_insert_id($this->db);
@@ -379,10 +379,10 @@ class Data
 		$sql = "DELETE FROM `$tablename` WHERE $conditions$limit";
 		
 //		echo $sql;
-		$rslt = mysql_query($qry, $this->db);
+		$rslt = mysql_query($sql, $this->db);
 		if(false === $rslt)
 		{
-			$this->E->throwErr(2, mysql_error($this->db));
+			$this->E->throwErr(2, mysql_error($this->db), 'mysql error', 0, 2);
 			return false;
 		}
 		return mysql_affected_rows($this->db);

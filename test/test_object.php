@@ -11,11 +11,32 @@ require_once("../core/Validator.php");
 require_once("../core/Test.php");
 // models
 require_once("./TestObject.php");
-require_once("../models/Title_old.php");
+require_once("./Title_old.php");
 
 $db = mysql_connect("127.0.0.1", "root", "");
-mysql_select_db("fcc_prefs_dev", $db);
+mysql_select_db("fcc_prefs_dev_test", $db);
 $E = Errors::instance(3);
+
+// dynamically load models because they might change from time to time
+$userprefs_generated_models_dir = "../models/generated";
+$userprefs_models_dir = "../models";
+function loadFromDir($dir)
+{
+	$contents = scandir($dir);
+	foreach($contents as $file)
+	{
+		$path = $dir . "/" . $file;
+		if(is_file($path))
+		{
+			if(false !== stripos($file, '.php'))
+			{
+				require_once($path);
+			}
+		}
+	}
+}
+loadFromDir($userprefs_generated_models_dir);
+loadFromDir($userprefs_models_dir);
 
 class ObjectTest extends Test
 {
@@ -23,7 +44,7 @@ class ObjectTest extends Test
 	private $json_callback = '{"testPropertyOne":10,"testPropertyTwo":"1234test","testPropertyThree":19}';
 	private $xml = '<?xml version="1.0" encoding="UTF-8"?><TestObject><testPropertyOne>10</testPropertyOne><testPropertyTwo>1234test</testPropertyTwo><testPropertyThree>19</testPropertyThree></TestObject>';
 	
-	public function test_TestObject()
+	public function test_objectMethods()
 	{
 		$testObject = new TestObject(1, "tes'1`?t\\2", 15);
 		$this->assertEqual($testObject->getTestPropertyOne(), 1, "testPropertyOne should be set to 1");
@@ -51,30 +72,38 @@ class ObjectTest extends Test
 		$this->assertEqual($obj->testPropertyThree, 19, "Object representation should have testPropertyThree set to 19");
 		$this->assertFalse($testObject->setTestPropertyThree(21), "Validation should stop 21 being set to testPropertyThree");
 		$this->assertFalse($testObject->setTestPropertyOne(-4), "Validation should stop -4 being set to testPropertyOne");
+		
+		$rules = $testObject->rules();
+		$this->assertCount($rules, 3, "Rules array should have an entry for each field in TestObject (3 in total)");
+
+		$rules_one = $testObject->rules("testPropertyOne");
+		$this->assert($rules, "Should fetch the rules for testPropertyOne", true);
+		$this->assertTrue($rules_one['number'], "TestPropertyOne's rules should include 'number' => true");
+		$this->assertTrue($rules_one['unsigned'], "TestPropertyOne's rules should include 'unsigned'=> true");
 	}
 	
-	public function test_title()
+	public function test_databaseInteraction()
 	{
-		$title = new Title();
+		$title = new Titles();
 		$this->assert($title->setTitle("Miss"), "Should be able to set Miss as the title");
 		$this->assert($title->insert(), "title insert should work");
 		$id = $title->getTitleId();
 		$this->assert($id, "title should have an id now");
 		
-		$title2 = new Title($id, "Mr");
+		$title2 = new Titles($id, "Mr");
 		$this->assertEqual($title2->getTitleId(), $id, "titleId should be $id");
 		$this->assertEqual($title2->getTitle(), "Mr", "title should be Mr");
 		$this->assert($title2->save(), "Should succesfully save title");
 		
-		$title3 = new Title();
+		$title3 = new Titles();
 		$title3->find($id);
 		$this->assertEqual($title3->getTitle(), "Mr", "Should find the correct record, with title, Mr");
 		
-		$title4 = new Title();
+		$title4 = new Titles();
 		$title4->setTitle("Dr");
 		$this->assert($title4->save(), "should save title 4");
 		
-		$title5 = new Title(null, "Mrs");
+		$title5 = new Titles(null, "Mrs");
 		$this->assert($title5->save(), "should save title 5");
 		$titles = $title->findAll();
 		$this->assertCount($titles, 3, "Should be 3 results");
@@ -108,7 +137,7 @@ class ObjectTest extends Test
 	
 	public function test_objectIsValid()
 	{
-		$title = new Title();
+		$title = new Titles();
 		$this->assertFalse($title->isValid(), "Empty object should be invalid");
 		$title->setTitle("Mr");
 		$this->assertTrue($title->isValid(), "Object should now be valid");
@@ -119,13 +148,13 @@ class ObjectTest extends Test
 	public function test_populate()
 	{
 		$field_data = array("title_id" => 1, "title" => "Mr");
-		$title1 = new Title();
+		$title1 = new Titles();
 		$title1->populate($field_data, true);
 		$this->assertEqual($title1->getTitleId(), $field_data["title_id"], "Should have correctly set the title id from the field data");
 		$this->assertEqual($title1->getTitle(), $field_data["title"], "Should have correctly set the title from the field data");
 
 		$property_data = array("titleId" => 2, "title" => "Mrs");
-		$title2 = new Title();
+		$title2 = new Titles();
 		$title2->populate($property_data);
 		$this->assertEqual($title2->getTitleId(), $property_data["titleId"], "Should have correctly set the title id from the property data");
 		$this->assertEqual($title2->getTitle(), $property_data["title"], "Should have correctly set the title from the property data");
@@ -143,39 +172,6 @@ class ObjectTest extends Test
 
 $object_test = new ObjectTest();
 $object_test->run();
-/*
-$testObject = new TestObject(1, "tes'1`?t\\2", 15);
-var_dump($testObject->getTestPropertyOne());
-var_dump($testObject->getTestPropertyTwo());
-//header('Content-type: text/xml');
 
-var_dump("testPropertyOne valid?", $testObject->checkField("testPropertyOne"));
-var_dump("testPropertyTwo valid?", $testObject->checkField("testPropertyTwo"));
-
-var_dump($testObject->toJson("testfn"));
-$testObject->setTestPropertyOne(10);
-$testObject->setTestPropertyTwo("1234test");
-var_dump($testObject->toXml());
-$testObject->setTestPropertyOne(-5);
-$testObject->setTestPropertyTwo("1234testtolongtoolong");
-var_dump($testObject->toArray());
-
-var_dump($testObject->fieldnames());
-var_dump($testObject->rules());
-var_dump($testObject->rules('testPropertOne'));
-
-$testObject->insert();
-echo "\n";
-$testObject->update();
-echo "\n";
-$testObject->find(1);
-echo "\n";
-$testObject->findAll(10, 0);
-echo "\n";
-$testObject->delete();
-echo "\n";
-$testObject->select(array(array("testPropertyOne", 4), array("testPropertyTwo", "LIKE", "%e")));
-echo "\n";
-*/
 echo $E->printErrors();
 ?>

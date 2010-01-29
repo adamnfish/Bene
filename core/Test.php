@@ -9,6 +9,7 @@ abstract class Test
 	{
 		$this->printTestHead();
 		$methods = get_class_methods($this);
+		$this->beforeTests();
 		foreach($methods as $method)
 		{
 			if(0 === strpos($method, "test_"))
@@ -19,6 +20,7 @@ abstract class Test
 				$this->teardown();
 			}
 		}
+		$this->afterTests();
 		$this->printSummary();
 		$this->printTestFoot();
 	}
@@ -29,6 +31,16 @@ abstract class Test
 	}
 	
 	protected function teardown()
+	{
+		
+	}
+	
+	protected function beforeTests()
+	{
+		
+	}
+	
+	protected function afterTests()
 	{
 		
 	}

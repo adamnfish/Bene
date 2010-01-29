@@ -12,11 +12,32 @@ require_once("../core/Form.php");
 require_once("../core/Test.php");
 // models
 require_once("./TestObject.php");
-require_once("../models/Title_old.php");
+require_once("./Title_old.php");
 
 $db = mysql_connect("127.0.0.1", "root", "");
-mysql_select_db("fcc_prefs_dev", $db);
+mysql_select_db("fcc_prefs_dev_test", $db);
 $E = Errors::instance(3);
+
+// dynamically load models because they might change from time to time
+$userprefs_generated_models_dir = "../models/generated";
+$userprefs_models_dir = "../models";
+function loadFromDir($dir)
+{
+	$contents = scandir($dir);
+	foreach($contents as $file)
+	{
+		$path = $dir . "/" . $file;
+		if(is_file($path))
+		{
+			if(false !== stripos($file, '.php'))
+			{
+				require_once($path);
+			}
+		}
+	}
+}
+loadFromDir($userprefs_generated_models_dir);
+loadFromDir($userprefs_models_dir);
 
 class FormTest extends Test
 {
@@ -32,13 +53,18 @@ class FormTest extends Test
 		$this->assertEqual($form->validationError("title"), "Please enter no more than 4 characters.", "'Maxlength' error message should have been thrown for title");
 	}
 	
-	public function test_form2()
+	public function test_addingObject()
 	{
 		$title = new Title();
 		$form = new UserPrefsForm($title);
 		$this->assertFalse($form->isValid(), "form should be invalid");
 		$this->assertEqual($form->validationError("title"), "This field is required.", "'Required' error message should  have been thrown for title");
 		$this->assertEqual($form->validationError("titleId"), '', "Empty primary field shouldn't throw an error");
+		
+		$title2 = new Title("3", "Mr");
+		$form2 = new UserPrefsForm($title2);
+		$this->assertEqual($form2->get("title"), $title2->getTitle(), "Should have populated the form with the title's title");
+		$this->assertEqual($form2->get("titleId"), $title2->getTitleId(), "Should have populated the form with the title's titleId");
 	}
 	
 	public function test_addingField()
@@ -52,6 +78,15 @@ class FormTest extends Test
 		
 		$form->addField("tandc");
 		$this->assertTrue($form->isValid(), "Form should still be valid because tandc has no rules");
+	}
+	
+	public function test_populate()
+	{
+		$title = new Title();
+		$form = new UserPrefsForm($title);
+		$form->populate(array("titleId" => 1, "title" => "Mr"));
+		$this->assertEqual($form->get("title"), "Mr", "Form should have been populated with a title of Mr");
+		$this->assertEqual($form->get("titleId"), 1, "Form should have been populated with a titleId of 1");
 	}
 }
 
