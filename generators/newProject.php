@@ -11,6 +11,8 @@ require_once('../core/Generator.php');
 
 class CreateNewProject
 {
+	private $project;
+	
 	public function __construct($numArgs, $args)
 	{
 		// have it self-invoke so it runs off the command line nicely
@@ -102,7 +104,9 @@ class CreateNewProject
 		require_once('projectFileGenerator.php');
 		$pfGen = new ProjectFileGenerator($root, $shortName, $fullName);
 		$pfGen->generate();
-		$pfGen->write();
+		$projectFile = $pfGen->write();
+		require_once($projectFile);
+		$this->project = new $shortName();
 	}
 	
 	/**
@@ -116,7 +120,7 @@ class CreateNewProject
 			"bin/tpl_compile",
 			"components/template_plugins",
 			"controllers",
-			"models",
+			"models/generated",
 			"views/templates",
 			"www/_resources/CSS",
 			"www/_resources/JS",
@@ -131,12 +135,14 @@ class CreateNewProject
 	
 	private function index()
 	{
-		
+		require_once('indexGenerator.php');
+		$iGen = new IndexGenerator($this->project);
 	}
 	
 	private function htaccess()
 	{
-		
+		require_once('htaccessGenerator.php');
+		$htGen = new HtaccessGenerator($this->project);
 	}
 	
 	/*

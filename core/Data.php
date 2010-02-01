@@ -39,7 +39,8 @@ class Data
 	
 	public function instance($db=false)
 	{
-		if (!isset(self::$data_instance)) {
+		if (!isset(self::$data_instance))
+		{
             $c = __CLASS__;
             self::$data_instance = new $c($db);
         }

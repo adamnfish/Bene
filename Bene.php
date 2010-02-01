@@ -65,6 +65,7 @@ abstract class Bene
 	public $projectRoot;
 	public $controllersPath;
 	public $modelsPath;
+	public $generatedModelsPath;
 	public $mappersPath;
 	public $componentsPath;
 	public $projectCorePath;
@@ -141,18 +142,19 @@ abstract class Bene
 	 */
 	protected function setProjectPaths($project_root)
 	{
-		$this->projectRoot		= $project_root;
-		$this->binPath			= $project_root . $this->ds . 'bin';
-		$this->controllersPath	= $this->projectRoot . $this->ds . 'controllers';
-		$this->modelsPath		= $this->projectRoot . $this->ds . 'models';
-		$this->mappersPath		= $this->projectRoot . $this->ds . 'mappers';
-		$this->formsPath		= $this->projectRoot . $this->ds . 'forms';
-		$this->componentsPath	= $this->projectRoot . $this->ds . 'components';
-		$this->templatePlugins	= $this->componentsPath . $this->ds . 'templatePlugins';
-		$this->projectCorePath	= $this->projectRoot . $this->ds . 'core';
-		$this->templatePath		= $this->projectRoot . $this->ds . 'templates';
-		$this->tpl_CompilePath	= $this->binPath . $this->ds . 'tpl_compile';
-		$this->tpl_CachePath	= $this->binPath . $this->ds . 'tpl_cache';
+		$this->projectRoot			= $project_root;
+		$this->controllersPath		= $this->projectRoot . $this->ds . 'controllers';
+		$this->modelsPath			= $this->projectRoot . $this->ds . 'models';
+		$this->generatedModelsPath	= $this->modelsPath . $this->ds . 'generated';
+		$this->mappersPath			= $this->projectRoot . $this->ds . 'mappers';
+		$this->formsPath			= $this->projectRoot . $this->ds . 'forms';
+		$this->componentsPath		= $this->projectRoot . $this->ds . 'components';
+		$this->templatePlugins		= $this->componentsPath . $this->ds . 'templatePlugins';
+		$this->projectCorePath		= $this->projectRoot . $this->ds . 'core';
+		$this->templatePath			= $this->projectRoot . $this->ds . 'templates';
+		$this->binPath				= $project_root . $this->ds . 'bin';
+		$this->tpl_CompilePath		= $this->binPath . $this->ds . 'tpl_compile';
+		$this->tpl_CachePath		= $this->binPath . $this->ds . 'tpl_cache';
 		// ... etc
 	}
 	

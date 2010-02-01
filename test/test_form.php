@@ -14,8 +14,11 @@ require_once("../core/Test.php");
 require_once("./TestObject.php");
 require_once("./Title_old.php");
 
+/*
+// not needed for this test
 $db = mysql_connect("127.0.0.1", "root", "");
 mysql_select_db("fcc_prefs_dev_test", $db);
+*/
 $E = Errors::instance(3);
 
 // dynamically load models because they might change from time to time

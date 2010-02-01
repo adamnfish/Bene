@@ -33,7 +33,7 @@ class ProjectFileGenerator extends Generator
 	{
 		ob_start();
 		// header
-		echo $this->classHeader($this->name, 'Bene', 'This class represents the project itself, including all its settings');
+		echo $this->classHeader($this->name, 'Bene', 'This class represents the project itself, including all its settings', array(dirname(__dir__) . '/Bene.php'));
 		
 		foreach($this->properties as $name => $value)
 		{
@@ -56,7 +56,7 @@ class ProjectFileGenerator extends Generator
 	public function write()
 	{
 		$filename = $this->projectRoot . '/' . $this->name . '.php';
-		parent::write($filename);
+		return parent::write($filename);
 	}
 	
 	private function construct()

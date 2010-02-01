@@ -32,14 +32,15 @@ class RequireSource
 	
 	private function requireLibraries()
 	{
-		// no libratries yet!
 		if(file_exists($this->project->librariesPath . $this->project->ds . 'smarty/smarty.class.php'));
+		// no other libratries yet!
 	}
 	
 	private function requireProject()
 	{
 		$this->requireFromDir($this->project->projectCorePath, true);
 		$this->requireFromDir($this->project->componentsPath, true);
+		$this->requireFromDir($this->project->generatedModelsPath, true);
 		$this->requireFromDir($this->project->modelsPath, true);
 		$this->requireFromDir($this->project->mappersPath, true);
 		$this->requireFromDir($this->project->controllersPath, true);
