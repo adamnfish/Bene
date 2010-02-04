@@ -395,8 +395,6 @@ class UserPrefsForm
 			foreach($this->fields as $field)
 			{
 				$this->valid = $this->checkField($field) && $this->valid;
-//				var_dump("checkField", $field, $this->checkField($field), $this->valid);
-//				var_dump($field, $this->valid);
 			}
 			$this->validated = true;
 		}

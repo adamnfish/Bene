@@ -239,7 +239,7 @@ abstract class Object
 		}
 		else
 		{
-			return $this->rules[$property];
+			return isset($this->rules[$property]) ? $this->rules[$property] : array();
 		}
 	}
 	
@@ -251,13 +251,18 @@ abstract class Object
 	 */
 	public function populate($data, $from_fieldnames=false)
 	{
+		if($from_fieldnames)
+		{
+			// TODO look into performance here
+			$fieldnames = array_flip($this->fieldnames);
+		}
 		foreach($data as $prop => $value)
 		{
 			if($from_fieldnames)
 			{
 				// TODO look into performance here
-				$fieldnames = array_flip($this->fieldnames);
-				if(isset($fieldnames[$prop]))
+//				if(isset($fieldnames[$prop]))
+				if(array_key_exists($prop, $fieldnames))
 				{
 					$prop = $fieldnames[$prop];
 				}
@@ -392,7 +397,6 @@ abstract class Object
 		$rslts = $this->dataSource->select($this->tablename, $fieldnames, $conditions, $order, $desc, $count, $page);
 		if(is_array($rslts))
 		{
-			//var_dump($rslts);
 			$data = array();
 			foreach($rslts as $rslt)
 			{
@@ -416,6 +420,7 @@ abstract class Object
 	
 	/**
 	 * General select
+	 * TODO translate porperties / fieldnames
 	 * @return unknown_type
 	 */
 	public function select($conditions=false, $order=false, $desc=false, $count=0, $page=1)
@@ -423,15 +428,30 @@ abstract class Object
 		$data = $this->dataSource->select($this->tablename, "*", $conditions, $order, $desc, $count, $page);
 		if(is_array($data))
 		{
-			$objects = array();
-			$class = get_class($this);
-			foreach($data as $object_data)
+			if(1 === $count)
 			{
-				$obj = new $class();
-				$obj->populate($object_data, true);
-				$objects[] = $obj;
+				if(1 === count($data))
+				{
+					$this->populate($data[0], true);
+					return $this;
+				}
+				else
+				{
+					return false;
+				}
 			}
-			return $objects;
+			else
+			{
+				$objects = array();
+				$class = get_class($this);
+				foreach($data as $object_data)
+				{
+					$obj = new $class();
+					$obj->populate($object_data, true);
+					$objects[] = $obj;
+				}
+				return $objects;
+			}
 		}
 		else
 		{

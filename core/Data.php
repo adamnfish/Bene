@@ -39,8 +39,7 @@ class Data
 	
 	public function instance($db=false)
 	{
-		if (!isset(self::$data_instance))
-		{
+		if (!isset(self::$data_instance)) {
             $c = __CLASS__;
             self::$data_instance = new $c($db);
         }
@@ -88,6 +87,7 @@ class Data
 	
 	private function arrayToCondition($conditionArray)
 	{
+		$condition = '';
 		if(3 === count($conditionArray))
 		{
 			$condition = '`' . $conditionArray[0] . '` ' . $conditionArray[1] . " '" . mysql_real_escape_string($conditionArray[2], $this->db) . "'";
@@ -137,7 +137,7 @@ class Data
 //			$this->connect();
 //		}
 		$page -= 1;
-		$start = (--$page * $count);
+		$start = ($page * $count);
 		if(is_array($fieldnames))
 		{
 			$fieldnames = implode(", ", $fieldnames);
@@ -160,7 +160,7 @@ class Data
 		
 		if($count)
 		{
-			if($page)
+			if(0 !== $page)
 			{
 				$limit = " LIMIT $start , $count;";
 			}
@@ -180,17 +180,18 @@ class Data
 
 		mysql_query($sql, $this->db);		
 		$rslt = mysql_query($sql, $this->db);
-		$data = array();
-		while($row = mysql_fetch_assoc($rslt))
-		{
-			$data[] = $row;
-		}
+
 		if(false === $rslt)
 		{
 			$this->E->throwErr(2, mysql_error($this->db));
 		}
 		else
 		{
+			$data = array();
+			while($row = mysql_fetch_assoc($rslt))
+			{
+				$data[] = $row;
+			}
 			return $data;
 		}
 	}
@@ -244,7 +245,7 @@ class Data
 		$sql[] = "SELECT * FROM `$tablename`";
 		if($count)
 		{
-			if($page)
+			if(0 !== $page)
 			{
 				$sql[] = " LIMIT $start , $count;";
 			}
@@ -350,14 +351,20 @@ class Data
 //		{
 //			$this->connect();
 //		}
-		$fieldnames = array_keys($data);
-		$values = array_values($data);
-		for($i = 0; $i < count($values); $i++)
+		$data_names = array_keys($data);
+		$data_values = array_values($data);
+		$fieldnames = array();
+		$values = array();
+		for($i = 0; $i < count($data); $i++)
 		{
-			$values[$i] = mysql_real_escape_string($values[$i], $this->db);
+			if(null !== $data_values[$i])
+			{
+				$fieldnames[] = $data_names[$i];
+				$values[] = mysql_real_escape_string($data_values[$i], $this->db);
+			}
 		}
 		$sql = "INSERT INTO `$tablename` (`" . implode("`, `", $fieldnames) . "`) VALUES ('" . implode("', '", $values) . "');";
-//		echo $sql;
+//		echo $sql . "\n";
 		$rslt = mysql_query($sql, $this->db);
 		if(false === $rslt)
 		{

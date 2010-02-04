@@ -82,18 +82,18 @@ class FormHelper
 		return $this->output($html);
 	}
 	
-	public function fieldTop($class='field')
+	private function fieldTop($class='field')
 	{
 		$html = Array();
 		$html[] = "<div class='$class'>";
-		return $this->output($html);
+		return implode('', $html);
 	}
 	
-	public function fieldBottom()
+	private function fieldBottom()
 	{
 		$html = Array();
 		$html[] = "</div>";
-		return $this->output($html);
+		return implode('', $html);
 	}
 	
 	public function sectionHeading($text)
@@ -122,15 +122,41 @@ class FormHelper
 		}
 	}
 	
+	public function displaySaved($name, $label, $attrs=array(), $value='', $error='')
+	{
+		$error = $error ? $error : $this->form->validationError($name);
+		$value = $value ? $value : $this->form->get($name);
+		$attrs = $this->attrsToHTML($attrs);
+		$html = array();
+		$html[] = $this->fieldTop('field text');
+		$html[] = $this->error($error, 'text');
+		$html[] = "<label class='text' for='$name'>$label</label><input type='text' id='$name' name='$name' disabled='disabled' value='$value' $attrs/>";
+		$html[] = $this->fieldBottom();
+		return $this->output($html);
+	}
+	
 	public function text($name, $label, $attrs=array(), $additional=array(), $value='', $error='')
 	{
 		$error = $error ? $error : $this->form->validationError($name);
 		$value = $value ? $value : $this->form->get($name);
 		$attrs = $this->attrsToHTML($attrs);
 		$html = array();
-		$html[] = $this->fieldTop();
+		$html[] = $this->fieldTop('field text');
 		$html[] = $this->error($error, 'text');
 		$html[] = "<label class='text' for='$name'>$label</label><input type='text' id='$name' name='$name' value='$value' $attrs/>";
+		$html[] = $this->fieldBottom();
+		return $this->output($html);
+	}
+	
+	public function password($name, $label, $attrs=array(), $additional=array(), $value='', $error='')
+	{
+		$error = $error ? $error : $this->form->validationError($name);
+		$value = $value ? $value : $this->form->get($name);
+		$attrs = $this->attrsToHTML($attrs);
+		$html = array();
+		$html[] = $this->fieldTop('field text');
+		$html[] = $this->error($error, 'text');
+		$html[] = "<label class='text' for='$name'>$label</label><input type='password' id='$name' name='$name' value='$value' $attrs/>";
 		$html[] = $this->fieldBottom();
 		return $this->output($html);
 	}
@@ -141,7 +167,7 @@ class FormHelper
 		$value = $value ? $value : $this->form->get($name);
 		$attrs = $this->attrsToHTML($attrs);
 		$html = array();
-		$html[] = $this->fieldTop();
+		$html[] = $this->fieldTop('field text');
 		$html[] = $this->error($error, 'text email');
 		$html[] = "<label class='text email' for='$name'>$label</label><input type='email' id='$name' name='$name' value='$value' $attrs/>";
 		$html[] = $this->fieldBottom();
@@ -181,8 +207,8 @@ class FormHelper
 		$html[] = $this->fieldTop();
 		$html[] = $this->error($error, 'checkbox');
 
-		$checked = ($value == $optionValue) ? "checked='checked'" : "";
-		$html[] = "<input type='checkbox' name='{$name}' id='{$name}' value='$optionValue' $checked/>";
+		$checked = ($value == $optionValue) ? "checked='checked' " : "";
+		$html[] = "<input type='checkbox' name='{$name}' id='{$name}' value='$optionValue' $checked$attrs/>";
 		$html[] = "<label class='checkbox single' for='{$name}'>$label</label>";
 		
 		$html[] = $this->fieldBottom();
@@ -209,14 +235,9 @@ class FormHelper
 			$options = explode(",", $options);
 		}
 		$html = array();
-		$options_assoc = array_values($options) === $options ? false : true;
 		foreach($options as $option => $label)
 		{
 			$selected = '';
-			if(false === $options_assoc)
-			{
-				$option = $label;
-			}
 			if($value == $option)
 			{
 				$selected = " selected='selected'";

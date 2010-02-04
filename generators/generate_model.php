@@ -157,6 +157,7 @@ class GenerateModels
 			}
 			
 			// rules
+			$rules[$property] = array();
 			if(false !== strpos($field['Type'], "unsigned"))
 			{
 				if(!is_array($rules[$property]))
@@ -212,11 +213,11 @@ class GenerateModels
 			{
 				// $accept
 				eval("\$accept = " . str_replace('enum(', 'array(', $field['Type']) . ";");
-				$rules[$property] = $accept;
+				$rules[$property]['accept'] = $accept;
 			}
 			
 			// not null -> required
-			if(false !== strpos($field['Null'], "NO"))
+			if(false !== strpos($field['Null'], "NO") && null === $field['Default'])
 			{
 				if(!is_array($rules[$property]))
 				{
@@ -234,12 +235,6 @@ class GenerateModels
 				}
 			}
 		}
-		/*
-		var_dump("Rules", $rules);
-		var_dump("properties", $properties);
-		var_dump("fieldnames", $fieldnames);
-		var_dump("key: $key", "name: $name", "tablename $tablename");
-		*/
 		$source = $this->modelHead($name . "_core")
 					. $this->modelProperties($properties)
 					. $this->modelFieldnames($fieldnames)
@@ -271,7 +266,7 @@ HEAD;
 	{
 		$properties_string = var_export($properties, true);
 		$source = <<<PROPS
-	protected \$properties = $properties_string;
+protected \$properties = $properties_string;
 
 PROPS;
 		return $source;
@@ -281,7 +276,7 @@ PROPS;
 	{
 		$fieldnames_string = var_export($fieldnames, true);
 		$source = <<<FIELDS
-	protected \$fieldnames = $fieldnames_string;
+protected \$fieldnames = $fieldnames_string;
 
 FIELDS;
 		return $source;
@@ -291,7 +286,7 @@ FIELDS;
 	{
 		$rules_string = var_export($rules, true);
 		$source = <<<RULES
-	protected \$rules = $rules_string;
+protected \$rules = $rules_string;
 
 RULES;
 		return $source;
@@ -352,5 +347,5 @@ $info = $generator->getTableInfo($test_table);
 $generator->generateModel($test_table, $info);
 */
 $generator = new GenerateModels();
-$generator->autoGenerate(dirname(dirname(__FILE__)) . "/models/generated", false, false, true);
+$generator->autoGenerate(dirname(dirname(__FILE__)) . "/models/generated");
 ?>

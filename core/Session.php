@@ -48,18 +48,22 @@ class Session
 			$user = $users->select(array(array("username", $username), array("password", md5(USERPREFSSALT . $password))));
 			if(is_array($user) && 1 === count($user)) // it works
 			{
-				return $this->escalate($user[0]);
+				return $this->escalate($user[0], $remember);
 			}
 			return false;
 		}
 	}
 	
-	public function escalate($user)
+	private function escalate($user, $remember=false)
 	{
 		session_regenerate_id();
 		$this->set('userId', $user->getUserId());
 		$this->set('user', $user);
 		$this->set('loggedIn', true);
+		if($remember)
+		{
+			$this->rememberLogin($user);
+		}
 		return true;
 	}
 	
@@ -80,16 +84,73 @@ class Session
 		return true;
 	}
 	
-	public function validateSession()
+	private function validateSession()
 	{
 		if($this->get('userId') && $this->get('loggedIn'))
 		{
+			$user = new Users();
+			$this->set('user', $user->find($this->get('userId')));
 			return true;
 		}
 		else
 		{
-			return false;
+			// attempts to recover a saved login from a cookie
+			return $this->recallLogin();
 		}
+	}
+	
+	/**
+	 * Recover a 'remember me' login
+	 * When the user selects 'remember me', we set a cookie that preserves their session on that computer
+	 * @return Bool
+	 */
+	private function recallLogin()
+	{
+		if(isset($_COOKIE[USERPREFSSESSION_USER]) && isset($_COOKIE[USERPREFSSESSION_KEY]))
+		{
+			$user_id = $_COOKIE[USERPREFSSESSION_USER];
+			$session_key = $_COOKIE[USERPREFSSESSION_KEY];
+			
+			$users = new Users();
+			$user = $users->select(array(array("user_id", $username), array("created", $session_key)));
+			
+			if(is_array($user) && 1 === count($user)) // it works
+			{
+				return $this->escalate($user[0]);
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Remembers the session by setting a cookie so each time they visit, they'll be logged in automatically
+	 * @return unknown_type
+	 */
+	private function rememberLogin($user)
+	{
+		return
+			setcookie(USERPREFSSESSION_USER, $user->getUserId(), time()+60*60*24*30, "/", true, true)
+				&&
+			setcookie(USERPREFSSESSION_KEY, $user->getCreated(), time()+60*60*24*30, "/", true, true);
+	}
+	
+	/**
+	 * Removes the 'remember' session cookie if it exists
+	 * @return Vool
+	 */
+	private function unrememberLogin()
+	{
+		if(isset($_COOKIE[USERPREFSSESSION_USER]))
+		{
+			setcookie(USERPREFSSESSION_USER, "", time() - 3600);
+			unset($_COOKIE[USERPREFSSESSION_USER]);
+		}
+		if(isset($_COOKIE[USERPREFSSESSION_KEY]))
+		{
+			setcookie(USERPREFSSESSION_KEY, "", time() - 3600);
+			unset($_COOKIE[USERPREFSSESSION_KEY]);
+		}
+		return true;
 	}
 	
 	public function isLoggedIn()
