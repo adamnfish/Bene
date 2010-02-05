@@ -13,6 +13,17 @@ require_once("../{$this->project->name}.php");
 ?>
 
 INDEX;
+		$this->source = $index;
+		return $this->source;
+	}
+	
+	public function write($filename='', $source=false)
+	{
+		if('' === $filename)
+		{
+			$filename = $this->project->projectRoot . $this->project->ds . 'www' . $this->project->ds . 'index.php';
+		}
+		parent::write($filename);
 	}
 }
 ?>

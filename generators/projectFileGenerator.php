@@ -22,6 +22,8 @@ class ProjectFileGenerator extends Generator
 		
 		$this->setProjectProperty('name', $this->name);
 		$this->setProjectProperty('fullName', $this->fullName);
+
+		$this->setProjectProperty('index', 'index');
 	}
 	
 	public function setProjectProperty($name, $value)
@@ -33,7 +35,7 @@ class ProjectFileGenerator extends Generator
 	{
 		ob_start();
 		// header
-		echo $this->classHeader($this->name, 'Bene', 'This class represents the project itself, including all its settings', array(dirname(__dir__) . '/Bene.php'));
+		echo $this->classHeader($this->name, 'Bene', 'This class represents the project itself, including all its settings', dirname(dirname(__FILE__)) . '/Bene.php');
 		
 		foreach($this->properties as $name => $value)
 		{
@@ -62,8 +64,12 @@ class ProjectFileGenerator extends Generator
 	private function construct()
 	{
 		$construct = <<<CONSTRUCT
-	public function __construct(\$webrootPath)
+	public function __construct(\$webrootPath='')
 	{
+		if('' === \$webrootPath)
+		{
+			\$webrootPath = __dir__ . \$this->ds . 'www';
+		}
 		parent::__construct(dirname(__file__), \$webrootPath);
 		\$this->config();
 		\$this->setProjectPaths(dirname(__file__));

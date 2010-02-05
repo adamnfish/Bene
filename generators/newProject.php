@@ -47,7 +47,7 @@ class CreateNewProject
 		}
 	}
 	
-	private function generate($root, $shortName, $longName)
+	private function generate($root, $shortName, $fullName)
 	{
 		if($this->confirmProject($root, $shortName, $fullName))
 		{
@@ -59,11 +59,18 @@ class CreateNewProject
 				$classname = ucwords($shortName);
 	
 				echo "Generating project file...\n";
-				$this->projectFile($root, $classname, $fullName);
+				$projectFile = $this->projectFile($root, $classname, $fullName);
 				require_once($root . '/' . $classname . '.php');
 				echo "Creating directory structure...\n";
 				$this->directoryStructure($root);
-	
+				$this->loadProjectFile($projectFile, $shortName);
+				
+				echo "Generating additional files...\n";
+				$this->index();
+				$this->htaccess();
+				$this->controller();
+				$this->indexController();
+				
 				echo "Finished generating project\n";
 			}
 			else
@@ -105,8 +112,18 @@ class CreateNewProject
 		$pfGen = new ProjectFileGenerator($root, $shortName, $fullName);
 		$pfGen->generate();
 		$projectFile = $pfGen->write();
-		require_once($projectFile);
-		$this->project = new $shortName();
+		return $projectFile;
+	}
+	
+	/**
+	 * Loads the created project file - this needs to be done after the dirs are created
+	 * @param $path
+	 * @return unknown_type
+	 */
+	private function loadProjectFile($projectFilePath, $projectName)
+	{
+		require_once($projectFilePath);
+		$this->project = new $projectName();
 	}
 	
 	/**
@@ -120,6 +137,7 @@ class CreateNewProject
 			"bin/tpl_compile",
 			"components/template_plugins",
 			"controllers",
+			"core",
 			"dataSources",
 			"models/generated",
 			"views/templates",
@@ -138,12 +156,32 @@ class CreateNewProject
 	{
 		require_once('indexGenerator.php');
 		$iGen = new IndexGenerator($this->project);
+		$iGen->generate();
+		$iGen->write();
 	}
 	
 	private function htaccess()
 	{
 		require_once('htaccessGenerator.php');
 		$htGen = new HtaccessGenerator($this->project);
+		$htGen->generate();
+		$htGen->write();
+	}
+	
+	private function controller()
+	{
+		require_once('controllerGenerator.php');
+		$htGen = new ControllerGenerator($this->project);
+		$htGen->generate();
+		$htGen->write();
+	}
+	
+	private function indexController()
+	{
+		require_once('indexControllerGenerator.php');
+		$htGen = new IndexControllerGenerator($this->project);
+		$htGen->generate();
+		$htGen->write();
 	}
 	
 	private function modelGeneratorScript()
@@ -161,7 +199,7 @@ class CreateNewProject
 		echo "I'm going to generate a new project with the following basic settings
 	Full Name: $longName
 	Short Name: $shortName
-	path: $root\n";
+	path: $root/$shortName\n";
 		echo "Proceed? y/n ";
 		$full_name_input = trim(fgets(STDIN));
 		return 'y' === $full_name_input[0];

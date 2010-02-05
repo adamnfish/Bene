@@ -77,11 +77,11 @@ FOOTER;
 		$fieldname = Utils::camelcase($fieldname);
 		if($value)
 		{
-			return '	private $' . $fieldname . ' = ' . var_export($value, true) . ";\n";
+			return '	public $' . $fieldname . ' = ' . var_export($value, true) . ";\n";
 		}
 		else
 		{
-			return '	private $' . $fieldname . ";\n";
+			return '	public $' . $fieldname . ";\n";
 		}
 	}
 }
