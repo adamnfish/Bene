@@ -120,6 +120,7 @@ class CreateNewProject
 			"bin/tpl_compile",
 			"components/template_plugins",
 			"controllers",
+			"dataSources",
 			"models/generated",
 			"views/templates",
 			"www/_resources/CSS",
@@ -143,6 +144,12 @@ class CreateNewProject
 	{
 		require_once('htaccessGenerator.php');
 		$htGen = new HtaccessGenerator($this->project);
+	}
+	
+	private function modelGeneratorScript()
+	{
+		require_once('objectGeneratorGenerator.php');
+		$modGen = new ObjectGeneratorGenerator($this->project);
 	}
 	
 	/*

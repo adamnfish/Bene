@@ -37,11 +37,10 @@ class ObjectGenerator extends Generator
 	private function readJDOS($dataSource, $object)
 	{
 		$this->dataSource = $dataSource;
-		$this->object = $object;
 		return $this->project->jdos[$dataSource]['schema'][$object];
 	}
 	
-	public function generate($dataSource, $object)
+	public function generate_OLD($dataSource, $object)
 	{
 		$jdos = $this->readJDOS($dataSource, $object);
 		ob_start();
@@ -66,15 +65,242 @@ class ObjectGenerator extends Generator
 		return $this->source;
 	}
 	
-	public function write($filename='')
+	public function generateAll($dataSource, $stubs=false)
+	{
+		foreach($this->project->jdos[$dataSource]['schema'] as $tablename => $table_info)
+		{
+			$this->generate($dataSource, $tablename, $stubs);
+			$this->write();
+		}
+	}
+	
+	public function generate($dataSource, $tablename, $stub=false)
+	{
+		// allow the object name to be different to the tablename
+		if(isset($this->project->jdos[$dataSource]['objectNames'][$tablename]))
+		{
+			$object = $this->project->jdos[$dataSource]['objectNames'][$tablename];
+		}
+		else
+		{
+			$object = $tablename;
+		}
+		
+		$jdos = $this->readJDOS($dataSource, $tablename);
+		$this->object = $object;
+		
+		$properties = array();
+		$fieldnames = array();
+		$rules = array();
+		$key;
+		
+		foreach($jdos as $fieldName => $field)
+		{
+			if(isset($field['propertyName']))
+			{
+				$property = $field['propertyName'];
+				$fieldnames[$property] = $fieldName;
+			}
+			else
+			{
+				$property = $fieldName;
+			}
+			$properties[] = $property;
+			$unsigned = false;
+			$rules[$property] = array();
+			
+			// unsigned?
+			if($field['unsigned'])
+			{
+				$rules[$property]['unsigned'] = true;
+				$unsigned = true;
+			}
+			
+			//rules
+			if(false !== strpos($field['Type'], "int"))
+			{
+				$rules[$property]['digits'] = true;
+				if($field['length'])
+				{
+					$max = pow(10, $field['length']) -1;
+					if($unsigned)
+					{
+						$min = 0;
+					}
+					else
+					{
+						$min = 0 - $max;
+					}
+					$rules[$property]['range'] = array($min, $max);
+				}
+			}
+			if("float" === $field['type'])
+			{
+				$rules[$property]['number'] = true;
+			}
+			if(false !== strpos($field['type'], "char"))
+			{
+				if($field['length'])
+				{
+					$rules[$property]['maxlength'] = $field['length'];
+				}
+			}
+			if("enum" === $field['type'])
+			{
+				$rules[$property]['accept'] = $field['values'];
+			}
+			if(($field['required'] || false == $field['null']) && (true == $field['null'] || false === isset($field['null'])))
+			{
+				$rules[$property]['required'] = true;
+			}
+			if($field['auto_increment'])
+			{
+				if(isset($rules[$property]['required']))
+				{
+					unset($rules[$property]['required']);
+				}
+			}
+			if(isset($field['email']))
+			{
+				$rules[$property]['email'] = true;
+			}
+			if(isset($field['url']))
+			{
+				$rules[$property]['url'] = true;
+			}
+			if(isset($field['date']))
+			{
+				$rules[$property]['date'] = true;
+			}
+			if(isset($field['dateISO']))
+			{
+				$rules[$property]['dateISO'] = true;
+			}
+			if(isset($field['number']))
+			{
+				$rules[$property]['number'] = true;
+			}
+			if(isset($field['digits']))
+			{
+				$rules[$property]['digits'] = true;
+			}
+			if(isset($field['maxlength']))
+			{
+				$rules[$property]['maxlength'] = $field['maxlength'];
+			}
+			if(isset($field['minlength']))
+			{
+				$rules[$property]['minlength'] = $field['minlength'];
+			}
+			if(isset($field['rangelength']))
+			{
+				$rules[$property]['rangelength'] = $field['rangelength'];
+			}
+			if(isset($field['max']))
+			{
+				$rules[$property]['max'] = $field['max'];
+			}
+			if(isset($field['min']))
+			{
+				$rules[$property]['min'] = $field['maxlminength'];
+			}
+			if(isset($field['range']))
+			{
+				$rules[$property]['range'] = $field['range'];
+			}
+			if(isset($field['equalto']))
+			{
+				$rules[$property]['equalto'] = $field['equalto'];
+			}
+			if(isset($field['pattern']))
+			{
+				$rules[$property]['pattern'] = $field['pattern'];
+			}
+			
+			// primary
+			if($field['primary'])
+			{
+				$key = $property;
+			}
+		}
+		
+		// use the constructed info to build the source
+		ob_start();
+
+		echo $this->classHeader($object . 'Core', 'Object');
+		echo $this->modelProperties($properties);
+		echo $this->modelFieldnames($fieldnames);
+		echo $this->modelRules($rules);
+		echo $this->modelKey($key);
+		echo $this->modelTablename($tablename);
+		echo $this->construct($properties, $dataSource);
+		echo $this->classFooter();
+		
+		$source = ob_get_contents();
+		ob_end_clean();
+		
+		if($stub)
+		{
+			$this->generateStub($dataSource, $tablename);
+		}
+		
+		$this->source = $source;
+		return $this->source;
+	}
+	
+	public function generateStub($dataSource, $tablename)
+	{
+		// allow the object name to be different to the tablename
+		if(isset($this->project->jdos[$dataSource]['objectNames'][$tablename]))
+		{
+			$object = $this->project->jdos[$dataSource]['objectNames'][$tablename];
+		}
+		else
+		{
+			$object = $tablename;
+		}
+	
+		$model_dir = $this->project->modelsPath . $this->project->ds . $this->dataSource;
+		if(!is_dir($model_dir))
+		{
+			mkdir($model_dir, 0755, true);
+		}
+		$superclass_path = $model_dir . $this->project->ds . 'generated' . $this->project->ds . Utils::camelcase($this->object, true) . 'Core.php';
+		ob_start();
+
+		echo $this->classHeader($object, Utils::camelcase($object, true) . "Core", '', $superclass_path);
+		echo $this->classFooter();
+		
+		$source = ob_get_contents();
+		ob_end_clean();
+		
+		$filename = $model_dir . $this->project->ds . Utils::camelcase($this->object, true) . '.php';
+		if(!file_exists($filename))
+		{
+			parent::write($filename, $source);
+		}
+		else
+		{
+			echo "Skipping existing file, $filename <br />\n";
+		}
+	}
+	
+	public function write($filename='', $source=false)
 	{
 		if('' === $filename)
 		{
-			$filename = $this->project->modelsPath . $this->project->ds . Utils::camelcase($this->object, true) . '.php';
+			$model_dir = $this->project->modelsPath . $this->project->ds . $this->dataSource;
+			$generated_dir = $model_dir . $this->project->ds . 'generated';
+			if(!is_dir($generated_dir))
+			{
+				mkdir($generated_dir, 0755, true);
+			}
+			$filename = $generated_dir . $this->project->ds . Utils::camelcase($this->object, true) . 'Core.php';
 		}
 		parent::write($filename);
 	}
 	
+	/*
 	private function setterConditions($fieldname, $field)
 	{
 		$conditions = array();
@@ -135,18 +361,75 @@ class ObjectGenerator extends Generator
 		}
 		return $cast;
 	}
+	*/
 	
-	private function construct()
+	private function modelProperties($properties)
 	{
-		$construct = <<<CONSTRUCT
+		$properties_string = var_export($properties, true);
+		$source = <<<PROPS
+protected \$properties = $properties_string;
 
-	public function __construct()
-	{
-		parent::__construct();
+PROPS;
+		return $source;
 	}
+	
+	private function modelFieldnames($fieldnames)
+	{
+		$fieldnames_string = var_export($fieldnames, true);
+		$source = <<<FIELDS
+protected \$fieldnames = $fieldnames_string;
 
-CONSTRUCT;
-		return $construct;
+FIELDS;
+		return $source;
+	}
+	
+	private function modelRules($rules)
+	{
+		$rules_string = var_export($rules, true);
+		$source = <<<RULES
+protected \$rules = $rules_string;
+
+RULES;
+		return $source;
+	}
+	
+	private function modelKey($key)
+	{
+		$source = <<<KEY
+	protected \$key = '$key';
+
+KEY;
+		return $source;
+	}
+	
+	private function modelTablename($tablename)
+	{
+		$source = <<<KEY
+	protected \$tablename = '$tablename';
+
+KEY;
+		return $source;
+	}
+	
+	private function construct($properties, $dataSource)
+	{
+		$source = array();
+		$source[] = "\n\tpublic function __construct($" . implode("=null, $", $properties) . "=null)\n\t{\n\t\tparent::__construct();\n";
+		$source[] = "\t\t\$this->dataSource = " . Utils::camelcase($dataSource, true) . "::instance();\n";
+		foreach($properties as $property)
+		{
+			$capitalised = strtoupper(substr($property, 0, 1)) . substr($property, 1);
+			$source[] = "\t\tif(null === \$$property)\n";
+			$source[] = "\t\t{\n";
+			$source[] = "\t\t\t\$this->data->$property = null;\n";
+			$source[] = "\t\t}\n";
+			$source[] = "\t\telse\n";
+			$source[] = "\t\t{\n";
+			$source[] = "\t\t\t\$this->set$capitalised(\$$property);\n";
+			$source[] = "\t\t}\n";
+		}
+		$source[] = "\t}\n";
+		return implode("", $source);
 	}
 	
 	private function getter($fieldname, $field)
@@ -165,6 +448,8 @@ GETTER;
 		return $getter;
 	}
 	
+	// this needs updating with the new $this->checkField format
+	/*
 	private function setter($fieldname, $field)
 	{
 		$setterName = 'set' . Utils::camelcase($fieldname, true);
@@ -205,5 +490,6 @@ SETTER;
 		}
 		return $setter;
 	}
+	*/
 }
 ?>

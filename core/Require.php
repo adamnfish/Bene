@@ -23,9 +23,10 @@ class RequireSource
 		require_once($this->project->corePath . $this->project->ds . 'Error.php');
 		require_once($this->project->corePath . $this->project->ds . 'Loader.php');
 		require_once($this->project->corePath . $this->project->ds . 'Object.php');
-		require_once($this->project->corePath . $this->project->ds . 'Data.php');
+		require_once($this->project->corePath . $this->project->ds . 'MySQL.php');
 		require_once($this->project->corePath . $this->project->ds . 'Mapper.php');
 		require_once($this->project->corePath . $this->project->ds . 'CoreController.php');
+		require_once($this->project->corePath . $this->project->ds . 'Validator.php');
 		
 		return true;
 	}
@@ -40,9 +41,8 @@ class RequireSource
 	{
 		$this->requireFromDir($this->project->projectCorePath, true);
 		$this->requireFromDir($this->project->componentsPath, true);
-		$this->requireFromDir($this->project->generatedModelsPath, true);
 		$this->requireFromDir($this->project->modelsPath, true);
-		$this->requireFromDir($this->project->mappersPath, true);
+		$this->requireFromDir($this->project->dataSourcesPath, true);
 		$this->requireFromDir($this->project->controllersPath, true);
 		
 		return true;

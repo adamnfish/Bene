@@ -9,10 +9,11 @@ abstract class Generator
 		$this->project = $project;
 	}
 	
-	public function write($filename='')
+	public function write($filename='', $src=false)
 	{
+		$source = (false === $src) ? $this->source : $src;
 		$fh = fopen($filename, "w");
-		fwrite($fh, $this->source);
+		fwrite($fh, $source);
 		fclose($fh);
 		return $filename;
 	}
@@ -29,13 +30,19 @@ abstract class Generator
 			$additionalComments = "\n * " . str_replace("\n", "\n * ", $additionalComments);
 		}
 		$include_files = "";
-		if($includes)
+	
+		if(is_string($includes))
+		{
+			$includes = array($includes);
+		}
+		if(is_array($includes))
 		{
 			$include_files .= "\n";
 			foreach($includes as $include)
 			{
-				$include_files .= 'require_once(\'' . $include . '\')';
+				$include_files .= 'require_once(\'' . $include . '\');';
 			}
+			$include_files .= "\n";
 		}
 		$time = date("c");
 		$header = <<<HEADER

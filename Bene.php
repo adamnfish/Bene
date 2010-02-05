@@ -87,7 +87,7 @@ abstract class Bene
 		
 		$this->requireSource = new RequireSource($this);
 		
-		$this->errors = new Errors();
+		$this->errors = Errors::instance();
 		$this->disableMagicQuotes();
 		
 		$this->loader = new Loader($this, $this->errors);
@@ -145,8 +145,9 @@ abstract class Bene
 		$this->projectRoot			= $project_root;
 		$this->controllersPath		= $this->projectRoot . $this->ds . 'controllers';
 		$this->modelsPath			= $this->projectRoot . $this->ds . 'models';
-		$this->generatedModelsPath	= $this->modelsPath . $this->ds . 'generated';
-		$this->mappersPath			= $this->projectRoot . $this->ds . 'mappers';
+		$this->dataSourcesPath		= $this->projectRoot . $this->ds . 'dataSources';
+		$this->utilitiesPath		= $this->projectRoot . $this->ds . 'utility_scripts';
+//		$this->mappersPath			= $this->projectRoot . $this->ds . 'mappers';
 		$this->formsPath			= $this->projectRoot . $this->ds . 'forms';
 		$this->componentsPath		= $this->projectRoot . $this->ds . 'components';
 		$this->templatePlugins		= $this->componentsPath . $this->ds . 'templatePlugins';

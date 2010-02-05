@@ -9,6 +9,7 @@ abstract class CoreController
 	protected $errors;
 	protected $project;
 	protected $method;
+	protected $E;
 	public $request_uri;
 	public $get;
 	public $post;
@@ -54,6 +55,7 @@ abstract class CoreController
 		}
 		$this->get = $_GET;
 		$this->post = $_POST;
+		$this->E = Errors::instance();
 	}
 	
 	/**

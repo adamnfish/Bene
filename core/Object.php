@@ -58,7 +58,6 @@ abstract class Object
 	{
 		$this->E = Errors::instance();
 		$this->data = new STDClass();
-		$this->dataSource = Data::instance();
 	}
 	
 	/**

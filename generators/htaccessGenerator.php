@@ -6,9 +6,13 @@ class HtaccessGenerator extends Generator
 		$this->source = $this->htaccess();
 	}
 	
-	public function write()
+	public function write($filename='', $source=false)
 	{
-		$this->project->webpath
+		if('' === $filename)
+		{
+			$filename = $this->project->projectRoot . $this->project->ds . 'www' . $this->project->ds . '.htaccess';
+		}
+		parent::write($filename);
 	}
 	
 	private function htaccess()
