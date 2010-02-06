@@ -29,6 +29,21 @@ class Loader
 		$this->route($params[0], $params[1], $params[2]);
 	}
 	
+	/**
+	 * Runs a controller method and passes the provided methods to it
+	 * @param Controller $controller
+	 * @param String $method
+	 * @param Array $args
+	 */
+	public function load($controller, $method, $args=array())
+	{
+		$controller->init($method, $this->project, $this->errors);
+		$controller->executeBefore();
+		call_user_func_array(array($controller, $method), $args);
+		$controller->showErrors();
+		$controller->executeAfter();
+	}
+	
 	// url mappings loosely inspired hereby - http://www.railsrocket.com/articles/routing-in-rails
 	private function checkMappings($pathinfo)
 	{
@@ -194,15 +209,6 @@ class Loader
 			}
 			
 		}
-	}
-	
-	private function load($controller, $method, $args=array())
-	{
-		$controller->init($method, $this->project, $this->errors);
-		$controller->executeBefore();
-		$controller->{$method}($args[0], $args[1], $args[2], $args[3], $args[4], $args[5], $args[6], $args[7], $args[8], $args[9], $args[10], $args[11], $args[12], $args[13], $args[14], $args[15], $args[16], $args[17]);
-		$controller->showErrors();
-		$controller->executeAfter();
 	}
 }
 ?>

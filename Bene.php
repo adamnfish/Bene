@@ -152,7 +152,7 @@ abstract class Bene
 		$this->componentsPath		= $this->projectRoot . $this->ds . 'components';
 		$this->templatePlugins		= $this->componentsPath . $this->ds . 'templatePlugins';
 		$this->projectCorePath		= $this->projectRoot . $this->ds . 'core';
-		$this->templatePath			= $this->projectRoot . $this->ds . 'templates';
+		$this->templatePath			= $this->projectRoot . $this->ds . 'views/templates';
 		$this->binPath				= $project_root . $this->ds . 'bin';
 		$this->tpl_CompilePath		= $this->binPath . $this->ds . 'tpl_compile';
 		$this->tpl_CachePath		= $this->binPath . $this->ds . 'tpl_cache';
