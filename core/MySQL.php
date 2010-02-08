@@ -18,9 +18,10 @@ abstract class MySQL
 	protected static $data_instance;
 	
 	protected $data = array();
-	protected $db;
 	protected $E;
 	protected $connected = false;// not used
+
+	public $db;
 	
 	/**
 	 * make this a singleton

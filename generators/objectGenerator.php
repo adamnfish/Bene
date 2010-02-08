@@ -103,7 +103,8 @@ class ObjectGenerator extends Generator
 			}
 			else
 			{
-				$property = $fieldName;
+				$property = Utils::camelcase($fieldName);
+				$fieldnames[$property] = $fieldName;
 			}
 			$properties[] = $property;
 			$unsigned = false;
@@ -116,6 +117,11 @@ class ObjectGenerator extends Generator
 				$unsigned = true;
 			}
 			
+			if("bool" === $field['type'])
+			{
+				$field['type'] = "tinyint";
+				$field['length'] = 1;
+			}
 			//rules
 			if(false !== strpos($field['Type'], "int"))
 			{
@@ -149,7 +155,7 @@ class ObjectGenerator extends Generator
 			{
 				$rules[$property]['accept'] = $field['values'];
 			}
-			if(($field['required'] || false == $field['null']) && (true == $field['null'] || false === isset($field['null'])))
+			if(($field['required'] || false === $field['null']) && (true == $field['null'] || false === isset($field['null'])))
 			{
 				$rules[$property]['required'] = true;
 			}
@@ -415,7 +421,7 @@ KEY;
 	{
 		$source = array();
 		$source[] = "\n\tpublic function __construct($" . implode("=null, $", $properties) . "=null)\n\t{\n\t\tparent::__construct();\n";
-		$source[] = "\t\t\$this->dataSource = " . Utils::camelcase($dataSource, true) . "::instance();\n";
+		$source[] = "\t\t\$this->dataSource = " . Utils::camelcase($dataSource, true) . "Data::instance();\n";
 		foreach($properties as $property)
 		{
 			$capitalised = strtoupper(substr($property, 0, 1)) . substr($property, 1);

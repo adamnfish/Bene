@@ -61,15 +61,18 @@ class CreateNewProject
 				echo "Generating project file...\n";
 				$projectFile = $this->projectFile($root, $classname, $fullName);
 				require_once($root . '/' . $classname . '.php');
+				
 				echo "Creating directory structure...\n";
 				$this->directoryStructure($root);
+				
 				$this->loadProjectFile($projectFile, $shortName);
 				
 				echo "Generating additional files...\n";
 				$this->index();
 				$this->htaccess();
 				$this->controller();
-				$this->indexController();
+				$this->homeController();
+				$this->modelGeneratorScript();
 				
 				echo "Finished generating project\n";
 			}
@@ -139,16 +142,25 @@ class CreateNewProject
 			"controllers",
 			"core",
 			"dataSources",
-			"models/generated",
+			"models",
 			"views/templates",
 			"www/_resources/CSS",
 			"www/_resources/JS",
 			"www/_resources/images",
 			"www/_resources/media",
+			"utility_scripts",
 		);
 		foreach($dirs as $dir)
 		{
-			mkdir($root . '/' . $dir, 0775, true);
+			if("models" === $dir || "dataSources" === $dir)
+			{
+				// give these open permissions so the generators can run over them later
+				mkdir($root . '/' . $dir, 0777, true);
+			}
+			else
+			{
+				mkdir($root . '/' . $dir, 0775, true);
+			}
 		}
 	}
 	
@@ -176,10 +188,10 @@ class CreateNewProject
 		$htGen->write();
 	}
 	
-	private function indexController()
+	private function homeController()
 	{
 		require_once('indexControllerGenerator.php');
-		$htGen = new IndexControllerGenerator($this->project);
+		$htGen = new HomeControllerGenerator($this->project);
 		$htGen->generate();
 		$htGen->write();
 	}

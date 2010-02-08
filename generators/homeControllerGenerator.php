@@ -1,11 +1,11 @@
 <?php
-class IndexControllerGenerator extends Generator
+class HomeControllerGenerator extends Generator
 {
 	public function generate()
 	{
 		$source = <<<SOURCE
 <?php
-class IndexController Extends Controller
+class HomeController Extends Controller
 {
 	public \$index = "index";
 	
@@ -24,7 +24,7 @@ SOURCE;
 	{
 		if('' === $filename)
 		{
-			$filename = $this->project->controllersPath . $this->project->ds . 'IndexController.php';
+			$filename = $this->project->controllersPath . $this->project->ds . 'HomeController.php';
 		}
 		parent::write($filename);
 	}

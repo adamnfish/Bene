@@ -27,9 +27,10 @@ class DatasourceGenerator extends Generator
 		if('' === $filename)
 		{
 			$data_dir = $this->project->dataSourcesPath;
-			$filename = $data_dir . $this->project->ds . Utils::camelcase($this->dataSource, true) . '.php';
+			$filename = $data_dir . $this->project->ds . Utils::camelcase($this->dataSource, true) . 'Data.php';
 		}
 		parent::write($filename);
+		return $filename;
 	}
 	
 	private function generateMySQL($jdos, $datasource)
@@ -41,7 +42,7 @@ class DatasourceGenerator extends Generator
 		$data['database'] = $jdos['connection']['database'];
 		
 		ob_start();
-		echo $this->classHeader($datasource, 'MySQL', 'Singleton database connection instance for ' . $datasource);
+		echo $this->classHeader($datasource . "Data", 'MySQL', 'Singleton database connection instance for ' . $datasource);
 		echo $this->data($data);
 		echo $this->instance();
 		echo $this->classFooter();

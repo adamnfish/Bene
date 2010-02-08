@@ -38,8 +38,10 @@ class Loader
 	public function load($controller, $method, $args=array())
 	{
 		$controller->init($method, $this->project, $this->errors);
-		$controller->executeBefore();
-		call_user_func_array(array($controller, $method), $args);
+		if(false !== $controller->executeBefore())
+		{
+			call_user_func_array(array($controller, $method), $args);
+		}
 		$controller->showErrors();
 		$controller->executeAfter();
 	}

@@ -26,7 +26,9 @@ class RequireSource
 		require_once($this->project->corePath . $this->project->ds . 'MySQL.php');
 		require_once($this->project->corePath . $this->project->ds . 'Mapper.php');
 		require_once($this->project->corePath . $this->project->ds . 'CoreController.php');
+		require_once($this->project->corePath . $this->project->ds . 'Form.php');
 		require_once($this->project->corePath . $this->project->ds . 'Validator.php');
+		require_once($this->project->corePath . $this->project->ds . 'CoreSession.php');
 		
 		return true;
 	}

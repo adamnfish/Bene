@@ -79,9 +79,11 @@ abstract class Bene
 	
 	protected function __construct($projectRoot, $webrootPath)
 	{
-		$this->setWebPaths($webrootPath);
 		$this->setBenePaths();
-		$this->setProjectPaths($projectRoot);
+		$this->setProjectPaths($projectRoot, $webrootPath);
+		
+		$webroot = dirname($_SERVER['SCRIPT_NAME']);
+		$this->setWebPaths($webroot);
 		
 		require_once($this->corePath . $this->ds . 'Require.php');
 		
@@ -140,8 +142,9 @@ abstract class Bene
 	/*
 	 * Config methods 
 	 */
-	protected function setProjectPaths($project_root)
+	protected function setProjectPaths($project_root, $webrootPath)
 	{
+		$this->webrootPath 			= $webrootPath;
 		$this->projectRoot			= $project_root;
 		$this->controllersPath		= $this->projectRoot . $this->ds . 'controllers';
 		$this->modelsPath			= $this->projectRoot . $this->ds . 'models';
@@ -159,16 +162,21 @@ abstract class Bene
 		// ... etc
 	}
 	
-	protected function setWebPaths($webrootPath)
+	protected function setWebPaths($webroot)
 	{
-		$this->webrootPath = $webrootPath;
+		$this->webroot			= $webroot;
+		$this->resources		= $this->webroot . '/_resources';
+		$this->cssPath			= $this->resources . $this->ds . 'CSS';
+		$this->javascriptPath	= $this->resources . $this->ds . 'JS';
+		$this->imagesPath		= $this->resources . $this->ds . 'images';
+		$this->mediaPath		= $this->resources . $this->ds . 'media';
 		// eg _img, _js if that becomes necessary
 	}
 	
 	public function template()
 	{
 		// require smarty
-		require_once($this->librariesPath . $this->ds . "smarty/libs/Smarty.class.php");
+		require_once($this->librariesPath . $this->ds . 'smarty/libs/Smarty.class.php');
 
 		$t = new Smarty;
 		$t->setTemplateDir($this->templatePath);
@@ -233,7 +241,7 @@ abstract class Bene
 			// so the default validator can be easily extensible
 			$validator = new Validator();
 		}
-		require_once($this->formsPath . $this->ds . $form . ".php");
+		require_once($this->formsPath . $this->ds . $form . '.php');
 		return new $form($validator);
 	}
 }

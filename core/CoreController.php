@@ -71,10 +71,14 @@ abstract class CoreController
 	{
 		if('template' === $name || 't' === $name)
 		{
-			if(false === is_a($this->template, 'Smarty'))
-			{
-				$this->t = $this->project->template();
-			}
+			$this->t = $this->project->template();
+			$this->t->assign('webroot', $this->project->webroot);
+			$this->t->assign('css', $this->project->cssPath);
+			$this->t->assign('js', $this->project->javascriptPath);
+			$this->t->assign('images', $this->project->imagesPath);
+			$this->t->assign('media', $this->project->mediaPath);
+			$this->t->assign('title', $this->project->fullName);
+			$this->t->assign('projectName', $this->project->fullName);
 			return $this->t;
 		}
 		else if('tpl' === $name)
@@ -142,6 +146,10 @@ abstract class CoreController
 	 */
 	public function redirect($url)
 	{
+		if(0 === strpos($url, '/'))
+		{
+			$url = $this->project->webroot . $url;
+		}
 		header('Location: ' . $url);
 	}
 	

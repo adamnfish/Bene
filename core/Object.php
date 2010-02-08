@@ -94,7 +94,7 @@ abstract class Object
 					else
 					{
 						$this->data->$property = null;
-						$this->E->throwErr(1, "Invalid property set in $method", "", 0, 2);
+						$this->E->throwErr(1, "Invalid property, " . var_export($args[0], true) . " set in $method", "", 0, 2);
 						return false;
 					}
 				}
@@ -460,9 +460,9 @@ abstract class Object
 	
 	// is query really necessary? wouldn't you do that from Data directly?
 	// perhaps this just fills in the tablename?
-	public function query()
+	public function query($sql)
 	{
-		
+		return $this->dataSource->query($sql);
 	}
 	
 	/**
