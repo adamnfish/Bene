@@ -127,11 +127,12 @@ abstract class Bene
 	// actually, for portability, they should be worked out
 	private function setBenePaths()
 	{
-		$this->benePath = dirname(__file__);
-		$this->corePath = $this->benePath . $this->ds . 'core';
-		$this->librariesPath = $this->benePath . $this->ds . 'libraries';
-		$this->generatorsPath = $this->benePath . $this->ds . 'generators';
-		$this->beneControllersPath = $this->benePath . $this->ds . 'controllers';
+		$this->benePath				= dirname(__file__);
+		$this->corePath				= $this->benePath . $this->ds . 'core';
+		$this->librariesPath		= $this->benePath . $this->ds . 'libraries';
+		$this->generatorsPath		= $this->benePath . $this->ds . 'generators';
+		$this->coreComponentsPath	= $this->benePath . $this->ds . 'components';
+		$this->beneControllersPath	= $this->benePath . $this->ds . 'controllers';
 		if(false === $this->webroot)
 		{
 			$webroot = explode('/index.php', $_SERVER['SCRIPT_NAME']);
@@ -144,21 +145,23 @@ abstract class Bene
 	 */
 	protected function setProjectPaths($project_root, $webrootPath)
 	{
-		$this->webrootPath 			= $webrootPath;
-		$this->projectRoot			= $project_root;
-		$this->controllersPath		= $this->projectRoot . $this->ds . 'controllers';
-		$this->modelsPath			= $this->projectRoot . $this->ds . 'models';
-		$this->dataSourcesPath		= $this->projectRoot . $this->ds . 'dataSources';
-		$this->utilitiesPath		= $this->projectRoot . $this->ds . 'utility_scripts';
-//		$this->mappersPath			= $this->projectRoot . $this->ds . 'mappers';
-		$this->formsPath			= $this->projectRoot . $this->ds . 'forms';
-		$this->componentsPath		= $this->projectRoot . $this->ds . 'components';
-		$this->templatePlugins		= $this->componentsPath . $this->ds . 'templatePlugins';
-		$this->projectCorePath		= $this->projectRoot . $this->ds . 'core';
-		$this->templatePath			= $this->projectRoot . $this->ds . 'views/templates';
-		$this->binPath				= $project_root . $this->ds . 'bin';
-		$this->tpl_CompilePath		= $this->binPath . $this->ds . 'tpl_compile';
-		$this->tpl_CachePath		= $this->binPath . $this->ds . 'tpl_cache';
+		$this->projectRoot		= $project_root;
+		$this->controllersPath	= $this->projectRoot . $this->ds . 'controllers';
+		$this->modelsPath		= $this->projectRoot . $this->ds . 'models';
+		$this->dataSourcesPath	= $this->projectRoot . $this->ds . 'dataSources';
+		$this->utilitiesPath	= $this->projectRoot . $this->ds . 'utility_scripts';
+//		$this->mappersPath		= $this->projectRoot . $this->ds . 'mappers';
+		$this->formsPath		= $this->projectRoot . $this->ds . 'forms';
+		$this->componentsPath	= $this->projectRoot . $this->ds . 'components';
+		$this->templatePlugins	= $this->componentsPath . $this->ds . 'templatePlugins';
+		$this->projectCorePath	= $this->projectRoot . $this->ds . 'core';
+		$this->templatePath		= $this->projectRoot . $this->ds . 'views/templates';
+		
+		$this->binPath			= $project_root . $this->ds . 'bin';
+		$this->tpl_CompilePath	= $this->binPath . $this->ds . 'tpl_compile';
+		$this->tpl_CachePath	= $this->binPath . $this->ds . 'tpl_cache';
+
+		$this->webrootPath 		= $webrootPath;
 		// ... etc
 	}
 	

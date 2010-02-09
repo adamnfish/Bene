@@ -390,7 +390,7 @@ abstract class Object
 		}
 	}
 	
-	public function findSelectOptions($fieldnames, $conditions=array(), $order=false, $desc=false, $count=0, $page=1)
+	public function findSelectOptions($fieldnames='*', $conditions=array(), $order=false, $desc=false, $count=0, $page=1)
 	{
 		// TODO translate property names to fieldnames
 		$rslts = $this->dataSource->select($this->tablename, $fieldnames, $conditions, $order, $desc, $count, $page);
@@ -456,6 +456,11 @@ abstract class Object
 		{
 			return false;
 		}
+	}
+	
+	public function selectOne($conditions=false)
+	{
+		return $this->select($conditions, false, false, 1);
 	}
 	
 	// is query really necessary? wouldn't you do that from Data directly?

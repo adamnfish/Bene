@@ -360,6 +360,10 @@ class Form
 		$rules = $this->rules[$field];
 		foreach($rules as $rule => $param)
 		{
+			if("equalTo" === $rule)
+			{
+				$param = $this->data[$param];
+			}
 			if(false === Validator::$rule($this->data[$field], $param))
 			{
 				if(!is_array($param))

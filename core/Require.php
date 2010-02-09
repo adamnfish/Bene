@@ -26,6 +26,7 @@ class RequireSource
 		require_once($this->project->corePath . $this->project->ds . 'MySQL.php');
 		require_once($this->project->corePath . $this->project->ds . 'Mapper.php');
 		require_once($this->project->corePath . $this->project->ds . 'CoreController.php');
+		require_once($this->project->corePath . $this->project->ds . 'Component.php');
 		require_once($this->project->corePath . $this->project->ds . 'Form.php');
 		require_once($this->project->corePath . $this->project->ds . 'Validator.php');
 		require_once($this->project->corePath . $this->project->ds . 'CoreSession.php');
@@ -42,7 +43,8 @@ class RequireSource
 	private function requireProject()
 	{
 		$this->requireFromDir($this->project->projectCorePath, true);
-		$this->requireFromDir($this->project->componentsPath, true);
+		// lazy-load components
+//		$this->requireFromDir($this->project->componentsPath, true);
 		$this->requireFromDir($this->project->modelsPath, true);
 		$this->requireFromDir($this->project->dataSourcesPath, true);
 		$this->requireFromDir($this->project->controllersPath, true);

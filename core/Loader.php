@@ -2,12 +2,12 @@
 class Loader
 {
 	protected $project;
-	protected $errors;
+	protected $E;
 	
-	public function __construct(&$project, &$errors)
+	public function __construct(&$project, &$E)
 	{
 		$this->project = $project;
-		$this->errors = $errors;
+		$this->E = $E;
 	}
 	
 	public function autoLoad()
@@ -37,7 +37,7 @@ class Loader
 	 */
 	public function load($controller, $method, $args=array())
 	{
-		$controller->init($method, $this->project, $this->errors);
+		$controller->init($method, $this->project, $this->E);
 		if(false !== $controller->executeBefore())
 		{
 			call_user_func_array(array($controller, $method), $args);
@@ -161,7 +161,7 @@ class Loader
 	
 	private function notFound()
 	{
-		$this->errors->throwErr(1, 'not found');
+		$this->E->throwErr(1, 'not found');
 		require_once($this->project->beneControllersPath . $this->project->ds . 'ErrorController.php');
 		$controller_name = 'ErrorController';
 		$controller = new ErrorController($_SERVER['REQUEST_URI']);
@@ -206,7 +206,7 @@ class Loader
 			}
 			else
 			{
-				$this->errors->throwErr(1, 'controller method not found', 'Couldn\'t find controller requested controller method or an index method as fallback');
+				$this->E->throwErr(1, 'controller method not found', 'Couldn\'t find controller requested controller method or an index method as fallback');
 				$this->notFound();
 			}
 			

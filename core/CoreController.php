@@ -55,7 +55,6 @@ abstract class CoreController
 		}
 		$this->get = $_GET;
 		$this->post = $_POST;
-		$this->E = Errors::instance();
 	}
 	
 	/**
@@ -104,7 +103,7 @@ abstract class CoreController
 	public function init($method, &$project, &$errors)
 	{
 		$this->project	= $project;
-		$this->errors	= $errors;
+		$this->E		= $errors;
 		$this->method	= $method;
 	}
 	
@@ -119,7 +118,7 @@ abstract class CoreController
 	
 	public function showErrors()
 	{
-		echo $this->errors->printErrors();
+		echo $this->E->printErrors();
 	}
 	
 	/**
@@ -178,10 +177,28 @@ abstract class CoreController
 	 * @param $arg6
 	 * @return String $link
 	 */
-	public function createInternalLink($controller, $method, $arg1, $arg2, $arg3, $arg4, $arg5, $arg6)
+	public function createInternalLink($controller, $method, $arg1=false, $arg2=false, $arg3=false, $arg4=false, $arg5=false, $arg6=false)
 	{
 		$path_components = func_get_args();
 		return $this->project->webroot . "/" . implode("/", $path_components); 
+	}
+	
+	public function loadComponent($component)
+	{
+		if(file_exists($this->project->componentsPath . $this->project->ds . $component . ".php"))
+		{
+			require($this->project->componentsPath . $this->project->ds . $component . ".php");
+			return new $component($this->project, $this->E);
+		}
+		else if(file_exists($this->project->coreComponentsPath . $this->project->ds . $component . ".php"))
+		{
+			require($this->project->coreComponentsPath . $this->project->ds . $component . ".php");
+			return new $component($this->project, $this->E);
+		}
+		else
+		{
+			return false;
+		}
 	}
 }
 ?>
