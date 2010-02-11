@@ -263,7 +263,7 @@ class Form
 	 */
 	public function addRules($field, $rules)
 	{
-		return $this->setRules(array_merge($this->_rules[$field], $rules));
+		return $this->setRules($field, array_merge($this->rules[$field], $rules));
 		$this->validated = false;
 	}
 	

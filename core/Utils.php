@@ -75,6 +75,31 @@ class Utils
     		return strtolower(substr($string,0,1)).substr($string,1);
     	}
     }
+    
+    /**
+     * Takes a float and returns a 2dp string of that number
+     * @param $float
+     * @return unknown_type
+     */
+    public function floatToMoney($float, $force_dp=false)
+    {
+    	if(0 == $float)
+    	{
+    		return "0";
+    	}
+    	$negative = $float < 0 ? "-" : "";
+    	$float = round($float, 2);
+    	if(round($float) == $float)
+    	{
+    		return $float . ($force_dp ? ".00" : "");
+    	}
+    	else
+    	{
+    		$float = (string)$float;
+    		$parts = explode(".", $float);
+    		return $parts[0] . '.' . str_pad($parts[1], 2, "0");
+    	}
+    }
 }
 
 ?>
