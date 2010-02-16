@@ -78,6 +78,7 @@ abstract class CoreController
 			$this->t->assign('media', $this->project->mediaPath);
 			$this->t->assign('title', $this->project->fullName);
 			$this->t->assign('projectName', $this->project->fullName);
+			$this->t->assign('projectAuthor', $this->project->author);
 			return $this->t;
 		}
 		else if('tpl' === $name)

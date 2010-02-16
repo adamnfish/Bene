@@ -422,7 +422,7 @@ abstract class Object
 	 * TODO translate porperties / fieldnames
 	 * @return unknown_type
 	 */
-	public function select($conditions=false, $order=false, $desc=false, $count=0, $page=1)
+	public function select($conditions=false, $order=false, $desc=false, $count=0, $page=1, $raw=false)
 	{
 		$data = $this->dataSource->select($this->tablename, "*", $conditions, $order, $desc, $count, $page);
 		if(is_array($data))
@@ -447,7 +447,14 @@ abstract class Object
 				{
 					$obj = new $class();
 					$obj->populate($object_data, true);
-					$objects[] = $obj;
+					if($raw)
+					{
+						$objects[] = $obj->toArray();
+					}
+					else
+					{
+						$objects[] = $obj;
+					}
 				}
 				return $objects;
 			}
@@ -456,6 +463,11 @@ abstract class Object
 		{
 			return false;
 		}
+	}
+	
+	public function selectRaw($conditions=false, $order=false, $desc=false, $count=0, $page=1)
+	{
+		return $this->select($conditions, $order, $desc, $count, $page, true);
 	}
 	
 	public function selectOne($conditions=false)

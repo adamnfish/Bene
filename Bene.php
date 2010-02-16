@@ -27,7 +27,7 @@ abstract class Bene
 	public $tpl_debugging = false;
 	public $tpl_caching = true;
 	public $tpl_cacheTime = 120;
-	public $tpl_leftDelimiter = '${';
+	public $tpl_leftDelimiter = '{';
 	public $tpl_rightDelimiter = '}';
 	
 	// or read mappings from a JSON file
