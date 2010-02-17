@@ -190,7 +190,7 @@ class CreateNewProject
 	
 	private function homeController()
 	{
-		require_once('indexControllerGenerator.php');
+		require_once('homeControllerGenerator.php');
 		$htGen = new HomeControllerGenerator($this->project);
 		$htGen->generate();
 		$htGen->write();
@@ -200,6 +200,8 @@ class CreateNewProject
 	{
 		require_once('objectGeneratorGenerator.php');
 		$modGen = new ObjectGeneratorGenerator($this->project);
+		$modGen->generate();
+		$modGen->write();
 	}
 	
 	/*
@@ -219,7 +221,7 @@ class CreateNewProject
 	
 	private function help()
 	{
-		echo "Usage: php " . basename(__file__) . " [project root]\n";
+		echo "Usage: php " . basename(__FILE__) . " [project root]\n";
 	}
 	
 	private function rootInvalid()

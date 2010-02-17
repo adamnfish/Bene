@@ -70,7 +70,7 @@ PROPS;
 	{
 		if (!isset(self::\$data_instance))
 		{
-		\$c = __CLASS__;
+			\$c = __CLASS__;
 			self::\$data_instance = new \$c(\$db);
 		}
 		return self::\$data_instance;

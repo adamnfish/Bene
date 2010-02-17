@@ -99,12 +99,16 @@ class CreateMySQLDBTables
 			}
 			else
 			{
-				$qry .= "default '" . mysql_real_escape_string($field['default']) . "'";
+				$qry .= "default '" . mysql_real_escape_string($field['default']) . "' ";
 			}
 		}
 		if($field['auto_increment'])
 		{
-			$qry .= 'auto_increment';
+			$qry .= 'auto_increment ';
+		}
+		if($field['comment'])
+		{
+			$qry .= "COMMENT '" . str_replace("'", "\\'", $field['comment']) . "' ";
 		}
 		$qry .= ",\n";
 		return $qry;
@@ -115,6 +119,7 @@ class CreateMySQLDBTables
 		// loop through fields, find primary
 		$primary;
 		$unique = array();
+		$fulltext = array();
 		$indices = array();
 		$qry = array();
 		foreach($fields as $fieldname => $field)
@@ -127,7 +132,11 @@ class CreateMySQLDBTables
 			{
 				$unique[] = $fieldname;
 			}
-			else if($field['index'])
+			if("fulltext" === strtolower($field['index']))
+			{
+				$fulltext[] = $fieldname;
+			}
+			if(true === $field['index'])
 			{
 				$indices[] = $fieldname;
 			}
@@ -136,6 +145,10 @@ class CreateMySQLDBTables
 		foreach($unique as $fieldname)
 		{
 			$qry[] = "UNIQUE KEY `$fieldname` (`$fieldname`)";
+		}
+		foreach($fulltext as $fieldname)
+		{
+			$qry[] = "FULLTEXT KEY `$fieldname` (`$fieldname`)";
 		}
 		foreach($indices as $fieldname)
 		{

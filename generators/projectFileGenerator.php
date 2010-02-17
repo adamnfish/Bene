@@ -23,7 +23,7 @@ class ProjectFileGenerator extends Generator
 		$this->setProjectProperty('name', $this->name);
 		$this->setProjectProperty('fullName', $this->fullName);
 
-		$this->setProjectProperty('index', 'index');
+		$this->setProjectProperty('index', 'home');
 	}
 	
 	public function setProjectProperty($name, $value)
@@ -68,11 +68,10 @@ class ProjectFileGenerator extends Generator
 	{
 		if('' === \$webrootPath)
 		{
-			\$webrootPath = __dir__ . \$this->ds . 'www';
+			\$webrootPath = dirname(__FILE__) . \$this->ds . 'www';
 		}
-		parent::__construct(dirname(__file__), \$webrootPath);
+		parent::__construct(dirname(__FILE__), \$webrootPath);
 		\$this->config();
-		\$this->setProjectPaths(dirname(__file__));
 	}
 
 

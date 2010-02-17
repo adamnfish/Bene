@@ -127,7 +127,7 @@ abstract class Bene
 	// actually, for portability, they should be worked out
 	private function setBenePaths()
 	{
-		$this->benePath				= dirname(__file__);
+		$this->benePath				= dirname(__FILE__);
 		$this->corePath				= $this->benePath . $this->ds . 'core';
 		$this->librariesPath		= $this->benePath . $this->ds . 'libraries';
 		$this->generatorsPath		= $this->benePath . $this->ds . 'generators';
