@@ -60,7 +60,7 @@ abstract class CoreController
 	/**
 	 * __get
 	 * 
-	 * This allows us to lazy load some controller properties for perfoamce's sake
+	 * This allows us to lazy load some controller properties for performance's sake
 	 * I'm thinking of Smarty here really, because you may just want to output eg. JSON/XML
 	 * in which case, loading up Smarty is a waste of cycles
 	 * @param $name

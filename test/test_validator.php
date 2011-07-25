@@ -79,9 +79,9 @@ class ValidatorTest extends Test
 		
 		// this email regexp needs looking at, really
 		$this->assertTrue(Validator::email(''), "'' should satisfy the email requirement, because it isn't 'required'");
-		$this->assertTrue(Validator::email("adam.fisher@tobias.tv"), "'adam.fisher@tobias.tv' should satisfy the email requirement");
-		$this->assertTrue(Validator::email("a+dam.fisher@tobias.tv"), "'a+dam.fisher@tobias.tv' should satisfy the email requirement");
-		$this->assertFalse(Validator::email("@@@@@adam.fisher@tobias.tv"), "'@@@@@adam.fisher@tobias.tv' not should satisfy the email requirement");
+		$this->assertTrue(Validator::email("test@example.com"), "'test@example.com' should satisfy the email requirement");
+		$this->assertTrue(Validator::email("t+est@example.com"), "'t+est@example.com' should satisfy the email requirement");
+		$this->assertFalse(Validator::email("@@@@@test@example.com"), "'@@@@@test@example.com' not should satisfy the email requirement");
 		$this->assertFalse(Validator::email("test.test@"), "'test.test@' not should satisfy the email requirement");
 		$this->assertFalse(Validator::email("testtest"), "'testtest' not should satisfy the email requirement");
 

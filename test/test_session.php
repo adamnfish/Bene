@@ -18,8 +18,8 @@ define(USERPREFSSALT, "3.141592654321isnotquitepi");
 
 session_start();
 
-$db = mysql_connect("127.0.0.1", "root", "");
-mysql_select_db("fcc_prefs_dev_test", $db);
+$db = mysql_connect("127.0.0.1", "root", ""); // example
+mysql_select_db("bene_test", $db);
 $E = Errors::instance(3);
 
 // dynamically load models because they might change from time to time
@@ -49,7 +49,7 @@ class SessionTest extends Test
 	
 	public function beforeTests()
 	{
-		$user = new Users(false, "adam.fisher@tobias.tv", "test", 1, 1, 1, 'adamfisher', 2, "answer");
+		$user = new Users(false, "test@example.com", "test", 1, 1, 1, 'adamfisher', 2, "answer");
 		$user->insert();
 		$this->testuser_id = $user->getUserId();
 	}
@@ -58,7 +58,7 @@ class SessionTest extends Test
 	{
 		$session = new Session();
 		$this->assertFalse($session->isLoggedIn(), "before login, session should not be logged in");
-		$this->assertTrue($session->login('adam.fisher@tobias.tv', 'test'), "Login in should have worked with test user");
+		$this->assertTrue($session->login('test@example.com', 'test'), "Login in should have worked with test user");
 		$this->assertTrue($session->isLoggedIn(), "login should be succesful");
 		$this->assertEqual($session->get("userId"), $this->testuser_id, "Session userid should match the user created in beforeTests");
 		
